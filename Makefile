@@ -10,13 +10,13 @@ top_srcdir = .
 PACKAGE = icewm
 VERSION = 1.2.23
 
-PREFIX = /usr
-BINDIR = /usr/X11R6/bin
-LIBDIR = /usr/share/icewm
+PREFIX = /usr/local/icewm
+BINDIR = /usr/local/icewm/bin
+LIBDIR = /usr/local/icewm/share/icewm
 CFGDIR = /etc/icewm
-LOCDIR = /usr/share/locale
-KDEDIR = /usr/share
-DOCDIR = /usr/share/doc
+LOCDIR = /usr/local/icewm/share/locale
+KDEDIR = /usr/local/icewm/share
+DOCDIR = /usr/local/icewm/share/doc
 GWMDIR = 
 
 INSTALL    = /usr/bin/install -c

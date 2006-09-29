@@ -56,10 +56,20 @@ void YFrameWindow::snapTo(int &wx, int &wy,
             int wxw = wx + iw;
 
             if (wx >= rx2 - d && wx <= rx2 + d) {
-                wx = rx2;
+	        // hack (joel)
+	        // old code: 
+	        // wx = rx2;
+	        // new code:
+	        wx = rx2 - 1;
+		// end hack
                 flags &= ~1;
             } else if (wxw >= rx1 - d && wxw <= rx1 + d) {
-                wx = rx1 - iw;
+	      // hack (joel)
+	      // old code: 
+	      // wx = rx1 - iw;
+	      // new code:
+                wx = rx1 - iw + 1;
+		// end hack
                 flags &= ~1;
             }
         }
@@ -95,10 +105,20 @@ void YFrameWindow::snapTo(int &wx, int &wy,
             int wyh = wy + ih;
 
             if (wy >= ry2 - d && wy <= ry2 + d) {
-                wy = ry2;
+	        // hack (joel)
+	        // old code: 
+	        // wy = ry2;
+	        // new code:
+                wy = ry2 - 1;
+		// end hack
                 flags &= ~2;
             } else if (wyh >= ry1 - d && wyh <= ry1 + d) {
-                wy = ry1 - ih;
+	        // hack (joel)
+	        // old code: 
+	        // wy = ry1 - ih;
+	        // new code:
+                wy = ry1 - ih + 1;
+		// end hack
                 flags &= ~2;
             }
         }

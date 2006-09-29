@@ -353,6 +353,9 @@ void YWindow::create() {
 
         XSelectInput(xapp->display(), fHandle, fEventMask);
     }
+
+    setAlpha(0xdd);
+
     XSaveContext(xapp->display(), fHandle, windowContext, (XPointer)this);
     flags |= wfCreated;
 }
@@ -374,6 +377,16 @@ void YWindow::destroy() {
         flags &= ~wfCreated;
     }
 }
+
+void YWindow::setAlpha(unsigned char alpha) {
+//   fprintf(stderr, "alpha: %d\n", alpha);
+  static Atom atom = XInternAtom
+    (xapp->display(), "_NET_WM_WINDOW_OPACITY", False);
+  unsigned value = (alpha == 0xff ? 0xffffffff : ((unsigned) alpha) << 24);
+  XChangeProperty(xapp->display(), fHandle, atom, XA_CARDINAL,
+		  32, PropModeReplace, (const unsigned char *) &value, 1);
+}
+
 void YWindow::removeWindow() {
     if (fParentWindow) {
         if (fParentWindow->fFocusedWindow == this)

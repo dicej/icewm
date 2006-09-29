@@ -13,9 +13,14 @@
 #include "wmframe.h"
 #include "wmwinlist.h"
 #include "yrect.h"
+#include "treemap.h"
 #include "yicon.h"
 #include "sysdep.h"
 #include <string.h>
+
+#ifdef DEBUG
+#include <iostream>
+#endif
 
 static YColor *normalTaskBarAppFg = 0;
 static YColor *normalTaskBarAppBg = 0;
@@ -166,30 +171,36 @@ void TaskBarApp::paint(Graphics &g, const YRect &/*r*/) {
         g.fillRect(1, 1, width() - 2, height() - 2);
     } else {
         g.setColor(bg);
+        static YColor* active = new YColor(clrActiveBorder);
+        static YColor* inactive = new YColor(clrInactiveBorder);
     
         if (style == 2) {
             p = 2;
             if (wmLook == lookMetal) {
-                g.drawBorderM(0, 0, width() - 1, height() - 1, false);
+	      //g.drawBorderM(0, 0, width() - 1, height() - 1, false);
+	        p = 1;
+	        g.drawBorderS(0, 0, width() - 1, height() - 1, active);
             } else if (wmLook == lookGtk) {
-                g.drawBorderG(0, 0, width() - 1, height() - 1, false);
-            }
+	        g.drawBorderG(0, 0, width() - 1, height() - 1, false);
+	    }
             else
                 g.drawBorderW(0, 0, width() - 1, height() - 1, false);
         } else {
             p = 1;
             if (wmLook == lookMetal) {
-                p = 2;
-                g.drawBorderM(0, 0, width() - 1, height() - 1, true);
+	      //p = 2;
+              //g.drawBorderM(0, 0, width() - 1, height() - 1, true);
+	        p = 1;
+	        g.drawBorderS(0, 0, width() - 1, height() - 1, inactive);
             } else if (wmLook == lookGtk) {
                 g.drawBorderG(0, 0, width() - 1, height() - 1, true);
             }
             else
                 g.drawBorderW(0, 0, width() - 1, height() - 1, true);
         }
-
-        int const dp(wmLook == lookMetal ? 2 : p);
-        int const ds(wmLook == lookMetal ? 4 : 3);
+	
+	int const dp(wmLook == lookMetal ? 1 : p);
+	int const ds(wmLook == lookMetal ? 2 : 3);
 
         if (width() > ds && height() > ds) {
 #ifdef CONFIG_GRADIENTS
@@ -418,6 +429,10 @@ void TaskPane::relayoutNow() {
 
     fNeedRelayout = false;
 
+    // hack (joel)
+    sort();
+    // end hack
+
     int x, y, w, h;
     int tc = 0;
 
@@ -434,32 +449,108 @@ void TaskPane::relayoutNow() {
     int leftX = 0;
     int rightX = width();
 
-    w = (rightX - leftX - 2) / tc;
-    int rem = (rightX - leftX - 2) % tc;
-    x = leftX;
-    h = height();
-    y = 0;
+    // hack (joel)
+    // old code:
+//     w = (rightX - leftX - 2) / tc;
+//     int rem = (rightX - leftX - 2) % tc;
+//     x = leftX;
+//     h = height();
+//     y = 0;
+
+//     TaskBarApp *f = fFirst;
+//     int lc = 0;
+
+//     while (f) {
+//       if (f->getShown()) {
+// 	int w1 = w;
+
+// 	if (lc < rem)
+// 	  w1++;
+
+// 	f->setGeometry(YRect(x, y, w1, h));
+// 	f->show();
+// 	x += w1;
+// 	lc++;
+//       } else
+// 	f->hide();
+//       f = f->getNext();
+//     }
+    // new code:
+    w = (rightX - leftX) / tc;
+    int rem = (rightX - leftX) % tc;
+    x = leftX - 2;
+    h = height() - 1;
+    y = 1;
 
     TaskBarApp *f = fFirst;
     int lc = 0;
 
     while (f) {
-        if (f->getShown()) {
-            int w1 = w;
+      if (f->getShown()) {
+// 	YFrameWindow* window = (YFrameWindow*) f->getFrame();
+	int w1 = w;
 
-            if (lc < rem)
-                w1++;
+	if (lc < rem)
+	  w1++;
 
-            f->setGeometry(YRect(x, y, w1, h));
-            f->show();
-            x += w1;
-            x += 0;
-            lc++;
-        } else
-            f->hide();
-        f = f->getNext();
+	f->setGeometry(YRect(x + 2, y, w1 - 2, h));
+	f->show();
+	x += w1;
+	lc++;
+      } else
+	f->hide();
+      f = f->getNext();
     }
+    // end hack
 }
+
+void TaskPane::sort() {
+#ifdef DEBUG
+  using namespace std;
+#endif
+  TaskBarApp* handle = fFirst;
+  int count = 0;
+  while (handle) { handle = handle->getNext(); ++count; }
+#ifdef DEBUG
+  cout << "before: " << count << endl;
+#endif
+
+  static TreeMap<TaskBarApp> map;
+  map.clear();
+  TaskBarApp* f = fFirst;
+
+  while (f) {
+    YFrameWindow* w = static_cast<YFrameWindow*>(f->getFrame());
+    map.add(w->x(), f);
+    f = f->getNext();
+  }
+
+#ifdef DEBUG
+  map.print();
+#endif
+  map.beginIteration();
+  f = fFirst = map.next();
+  if (f) {
+    f->setPrev(0);
+    TaskBarApp* next = map.next();
+    while (next) {
+      f->setNext(next);
+      next->setPrev(f);
+      f = next;
+      next = map.next();
+    }
+    f->setNext(0);
+    fLast = f;
+  }
+  handle = fFirst;
+  count = 0;
+  while (handle) { handle = handle->getNext(); ++count; }
+#ifdef DEBUG
+  cout << "after: " << count << endl;
+#endif
+}
+
+extern YColor *taskBarBg;
 
 void TaskPane::handleClick(const XButtonEvent &up, int count) {
     if (up.button == 3 && count == 1 && IS_BUTTON(up.state, Button3Mask)) {

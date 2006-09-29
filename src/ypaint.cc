@@ -24,7 +24,6 @@
 /******************************************************************************/
 
 /******************************************************************************/
-
 YColor::YColor(unsigned short red, unsigned short green, unsigned short blue):
     fRed(red), fGreen(green), fBlue(blue),
     fDarker(NULL), fBrighter(NULL)
@@ -818,6 +817,13 @@ void Graphics::drawBorderG(int x, int y, int w, int h, bool raised) {
         drawLine(x + 1, y + 1, x + w - 1, y + 1);
         drawLine(x + 1, y + 1, x + 1, y + h - 1);
     }
+    setColor(back);
+}
+
+void Graphics::drawBorderS(int x, int y, int w, int h, YColor* color) {
+    YColor* back = Graphics::color();
+    setColor(color);
+    drawRect(x, y, w, h);
     setColor(back);
 }
 

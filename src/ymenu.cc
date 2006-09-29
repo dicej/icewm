@@ -956,7 +956,8 @@ void YMenu::paintItem(Graphics &g, const int i, const int l, const int t, const 
                     drawBackground(g, l, t, width() - r - l, eh);
                 }
 
-                if (wmLook == lookMetal && i != selectedItem) {
+                if ((wmLook == lookMetal)
+		    && i != selectedItem) {
                     g.setColor(menuBg->brighter());
                     g.drawLine(1, t, 1, t + eh - 1);
                     g.setColor(menuBg);

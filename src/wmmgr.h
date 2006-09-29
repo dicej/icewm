@@ -292,6 +292,7 @@ extern Atom _XA_NET_NUMBER_OF_DESKTOPS;          // implement change request
 extern Atom _XA_NET_CURRENT_DESKTOP;             // OK
 ///extern Atom _XA_NET_DESKTOP_NAMES;            // N/A
 extern Atom _XA_NET_ACTIVE_WINDOW;               // OK
+extern Atom _XA_NET_ACTIVE_WINDOW_FRAME;
 extern Atom _XA_NET_WORKAREA;                    // OK
 extern Atom _XA_NET_SUPPORTING_WM_CHECK;         // OK
 ///extern Atom _XA_NET_SUPPORTING_WM_CHECK;      // N/A

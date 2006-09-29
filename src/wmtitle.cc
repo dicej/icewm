@@ -126,10 +126,17 @@ void YFrameTitleBar::handleClick(const XButtonEvent &up, int count) {
                 getFrame()->wmMaximizeHorz();
         }
     } else if (count == 1) {
-        if (up.button == 3 && (KEY_MODMASK(up.state) & (xapp->AltMask)) == 0) {
-            getFrame()->popupSystemMenu(this, up.x_root, up.y_root,
-                                        YPopupWindow::pfCanFlipVertical |
-                                        YPopupWindow::pfCanFlipHorizontal);
+//         if (up.button == 3 && (KEY_MODMASK(up.state) & (xapp->AltMask)) == 0) {
+//             getFrame()->popupSystemMenu(this, up.x_root, up.y_root,
+//                                         YPopupWindow::pfCanFlipVertical |
+//                                         YPopupWindow::pfCanFlipHorizontal);
+      if (up.button == 3) {
+	getFrame()->wmLower();
+      } else if (up.button == 2 &&
+		 (KEY_MODMASK(up.state) & (xapp->AltMask)) == 0) {
+	getFrame()->popupSystemMenu(this, up.x_root, up.y_root,
+				    YPopupWindow::pfCanFlipVertical |
+				    YPopupWindow::pfCanFlipHorizontal);
         } else if (up.button == 1) {
             if (KEY_MODMASK(up.state) == xapp->AltMask) {
                 if (getFrame()->canLower()) getFrame()->wmLower();
@@ -367,17 +374,17 @@ void YFrameTitleBar::paint(Graphics &g, const YRect &/*r*/) {
         break;
     }
 
-    if (title && tlen) {
-        stringOffset+= titleBarHorzOffset;
+//     if (title && tlen) {
+// 	stringOffset+= titleBarHorzOffset;
 
-        if (st) {
-            g.setColor(st);
-            g.drawStringEllipsis(stringOffset + 1, yPos + 1, title, tlen);
-        }
+// 	if (st) {
+// 	    g.setColor(st);
+// 	    g.drawStringEllipsis(stringOffset + 1, yPos + 1, title, tlen);
+// 	}
 
-        g.setColor(fg);
-        g.drawStringEllipsis(stringOffset, yPos, title, tlen);
-    }
+// 	g.setColor(fg);
+//      g.drawStringEllipsis(stringOffset, yPos, title, tlen);
+//     }
 }
 
 #ifdef CONFIG_SHAPED_DECORATION

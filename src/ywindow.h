@@ -202,6 +202,9 @@ public:
     bool hasPopup();
     void setDoubleBuffer(bool doubleBuffer);
 
+protected:
+    void setAlpha(unsigned char alpha);
+
 private:
     typedef enum {
         wfVisible   = 1 << 0,

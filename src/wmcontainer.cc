@@ -96,7 +96,20 @@ void YClientContainer::handleButton(const XButtonEvent &button) {
         }
     }
 #endif
-    ///!!! do this first?
+    if (clientMouseActions && 
+	((button.state & (ControlMask | ShiftMask | xapp->AltMask))
+	 == (ControlMask | xapp->AltMask))) {
+      XAllowEvents(xapp->display(), AsyncPointer, CurrentTime);
+      if (button.button == 1) {
+	getFrame()->wmClose(); // bwahaha
+	return;
+      }
+    }
+
+//     if (doActivate)
+//         getFrame()->activate();
+//     if (doRaise)
+//         getFrame()->wmRaise();
     if (doActivate) {
         bool input = getFrame() ? getFrame()->getInputFocusHint() : true;
 
@@ -105,6 +118,7 @@ void YClientContainer::handleButton(const XButtonEvent &button) {
     }
     if (doRaise)
         getFrame()->wmRaise();
+
     ///!!! it might be nice if this was per-window option (app-request)
     if (!firstClick || passFirstClickToClient)
         XAllowEvents(xapp->display(), ReplayPointer, CurrentTime);
@@ -150,15 +164,22 @@ void YClientContainer::releaseButtons() {
 }
 
 void YClientContainer::grabActions() {
-    if (clientMouseActions) {
-        if (!fHaveActionGrab) {
-            fHaveActionGrab = true;
-            if (gMouseWinMove.key != 0)
-                grabVButton(gMouseWinMove.key - XK_Pointer_Button1 + 1, gMouseWinMove.mod);
-            if (gMouseWinSize.key != 0)
-                grabVButton(gMouseWinSize.key - XK_Pointer_Button1 + 1, gMouseWinSize.mod);
-        }
+  if (clientMouseActions) {
+    if (!fHaveActionGrab) {
+      fHaveActionGrab = true;
+#if 1
+      grabButton(1, xapp->AltMask);
+      grabButton(1, ControlMask | xapp->AltMask);
+      grabButton(3, xapp->AltMask);
+#else
+      // joel: this code is new with 1.2.20, but conflicts with above hack:
+      if (gMouseWinMove.key != 0)
+	grabVButton(gMouseWinMove.key - XK_Pointer_Button1 + 1, gMouseWinMove.mod);
+      if (gMouseWinSize.key != 0)
+	grabVButton(gMouseWinSize.key - XK_Pointer_Button1 + 1, gMouseWinSize.mod);
+#endif
     }
+  }
 }
 
 void YClientContainer::handleConfigureRequest(const XConfigureRequestEvent &configureRequest) {

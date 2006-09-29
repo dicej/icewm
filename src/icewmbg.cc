@@ -128,7 +128,14 @@ void DesktopBackgroundManager::update() {
     //    long w = getWorkspace();
     //    if (w != activeWorkspace) {
     //        activeWorkspace = w;
-    changeBackground(activeWorkspace);
+	// hack (joel)
+	// old code:
+        //changeBackground(activeWorkspace);
+	// new code:
+	static bool doit = true;
+	if (doit) changeBackground(activeWorkspace);
+	doit = false;
+	// end hack
     //    }
 }
 

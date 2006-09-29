@@ -989,8 +989,9 @@ int YWindowManager::calcCoverage(bool down, YFrameWindow *frame, int x, int y, i
             continue;
 
         cover +=
-            intersection(f->x(), f->x() + f->width(), x, x + w) *
-            intersection(f->y(), f->y() + f->height(), y, y + h) * factor;
+	  intersection(f->x(), f->x() + f->width() - 1, x, x + w - 1) *
+	  intersection(f->y(), f->y() + f->height() - 1, y, y + h - 1) *
+	  factor;
 
         if (factor > 1)
             factor /= 2;
@@ -1058,9 +1059,9 @@ bool YWindowManager::getSmartPlace(bool down, YFrameWindow *frame, int &x, int &
             continue;
 
         addco(xcoord, xcount, f->x());
-        addco(xcoord, xcount, f->x() + f->width());
+        addco(xcoord, xcount, f->x() + f->width() - 1);
         addco(ycoord, ycount, f->y());
-        addco(ycoord, ycount, f->y() + f->height());
+        addco(ycoord, ycount, f->y() + f->height() - 1);
     }
     addco(xcoord, xcount, Mx);
     addco(ycoord, ycount, My);
@@ -2350,12 +2351,19 @@ void YWindowManager::removeClientFrame(YFrameWindow *frame) {
 
 void YWindowManager::notifyFocus(YFrameWindow *frame) {
     long wnd = frame ? frame->client()->handle() : None;
+//     msg("focusing 0x%x; frame is 0x%x\n", wnd, (frame ? frame->handle() : 0));
     XChangeProperty(xapp->display(), handle(),
                     _XA_NET_ACTIVE_WINDOW,
                     XA_WINDOW,
                     32, PropModeReplace,
                     (unsigned char *)&wnd, 1);
 
+    long frm = frame ? frame->handle() : None;
+    XChangeProperty(xapp->display(), handle(),
+                    _XA_NET_ACTIVE_WINDOW_FRAME,
+                    XA_WINDOW,
+                    32, PropModeReplace,
+                    (unsigned char *)&frm, 1);
 }
 
 void YWindowManager::switchFocusTo(YFrameWindow *frame, bool reorderFocus) {

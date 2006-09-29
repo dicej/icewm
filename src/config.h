@@ -77,7 +77,7 @@
 #define CONFIG_WINMENU 1
 
 /* Define to enable x86 assembly code. */
-#define CONFIG_X86_ASM 1
+/* #undef CONFIG_X86_ASM */
 
 /* Define to enable XFreeType support. */
 #define CONFIG_XFREETYPE 2
@@ -195,7 +195,7 @@
 #define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the `strftime' function. */
-#define HAVE_STRFTIME 1
+/* #undef HAVE_STRFTIME */
 
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
@@ -323,7 +323,7 @@
 #define SIZEOF_INT 4
 
 /* The size of a `long', as computed by sizeof. */
-#define SIZEOF_LONG 4
+#define SIZEOF_LONG 8
 
 /* The size of a `short', as computed by sizeof. */
 #define SIZEOF_SHORT 2
@@ -341,7 +341,7 @@
 #define WMSPEC_HINTS 1
 
 /* Define to enable Xinerama support */
-#define XINERAMA 1
+/* #undef XINERAMA */
 
 /* Define to 1 if the X Window System is missing or not being used. */
 /* #undef X_DISPLAY_MISSING */

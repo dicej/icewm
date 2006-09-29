@@ -318,6 +318,12 @@ void YFrameWindow::configure(const YRect &r, const bool resized) {
 /// TODO #warning "make a test program for this"
     ///if (x != oldX || y != oldY)
     sendConfigure();
+
+// hack (joel)
+#ifdef CONFIG_TASKBAR
+    updateTaskBar();
+#endif
+// end hack
 }
 
 void YFrameWindow::layoutTitleBar() {

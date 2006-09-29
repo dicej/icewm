@@ -1,11 +1,11 @@
 srcdir =        .
 top_srcdir =    ..
 
-prefix  =       /usr
+prefix  =       /usr/local/icewm
 datadir =       ${prefix}/share
 
 PACKAGE =	icewm
-LOCDIR =        /usr/share/locale
+LOCDIR =        /usr/local/icewm/share/locale
 
 DESTDIR = 
 

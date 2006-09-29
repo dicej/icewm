@@ -68,6 +68,10 @@ private:
     TaskBarApp *fFirst, *fLast;
     int fCount;
     bool fNeedRelayout;
+
+  // hack (joel)
+  void sort();
+  // end hack
 };
 
 #endif

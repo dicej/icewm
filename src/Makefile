@@ -1,12 +1,12 @@
 PACKAGE = icewm
-VERSION = 1.2.23
-HOSTOS  = Linux 2.6.12-1.1398_FC4
-HOSTCPU = i686
+VERSION = 1.2.20
+HOSTOS  = Linux 2.6.10-9-amd64-k8
+HOSTCPU = x86_64
 
-LIBDIR = /usr/share/icewm
+LIBDIR = /usr/local/icewm/share/icewm
 CFGDIR = /etc/icewm
-LOCDIR = /usr/share/locale
-DOCDIR = /usr/share/doc
+LOCDIR = /usr/local/icewm/share/locale
+DOCDIR = /usr/local/icewm/share/doc
 
 ################################################################################
 
@@ -34,11 +34,11 @@ DEFS =          -DHAVE_CONFIG_H \
                 -DICEHELPIDX='"$(DOCDIR)/icewm-$(VERSION)/icewm.html"'
 
 CXXFLAGS =      -fpermissive -Wall -Wpointer-arith -Wconversion -Wwrite-strings -Winline -Woverloaded-virtual -W -fno-exceptions -fno-rtti -g -O2 $(DEBUG) $(DEFS) \
-	         -I/usr/X11R6/include -I/usr/X11R6/include -I/usr/include/freetype2 -I/usr/include/freetype2/config -I/usr/X11R6/include -I/usr/X11R6/include  # `fc-config --cflags`
+	         -I/usr/X11R6/include -I/usr/include -I/usr/include/freetype2 -I/usr/X11R6/include   # `fc-config --cflags`
 LFLAGS =	
 LIBS =          
 
-CORE_LIBS =     -lXinerama  -lSM -lICE  -lX11  -L/usr/X11R6/lib  -lXrandr -lXrender -lXext -L/usr/X11R6/lib -lXft -lX11 -lfreetype -lfontconfig -L/usr/X11R6/lib -lXrender # `fc-config --libs`
+CORE_LIBS =      -lSM -lICE  -lX11  -L/usr/X11R6/lib  -lXrandr -lXrender -lXext -lXft -lX11 -lfreetype -lz -lfontconfig -L/usr/X11R6/lib -lXrender -lX11 # `fc-config --libs`
 IMAGE_LIBS =    -L/usr/lib -lImlib -ljpeg -ltiff -lungif -lpng -lz -lm -lXext -L/usr/X11R6/lib -lSM -lICE -lXext -lX11
 AUDIO_LIBS =    
 GNOME1_LIBS =    

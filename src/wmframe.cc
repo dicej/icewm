@@ -40,6 +40,15 @@ YTimer *YFrameWindow::fDelayFocusTimer = 0;
 extern XContext frameContext;
 extern XContext clientContext;
 
+namespace {
+char* transClasses[] = {
+  "rxvt",
+  "xterm",
+  "emacs",
+  0
+};
+}
+
 bool YFrameWindow::isButton(char c) {
     if (strchr(titleButtonsSupported, c) == 0)
         return false;
@@ -321,6 +330,21 @@ YFrameWindow::~YFrameWindow() {
 void YFrameWindow::doManage(YFrameClient *clientw) {
     PRECONDITION(clientw != 0);
     fClient = clientw;
+
+    XClassHint* hint = fClient->classHint();
+    unsigned char alpha = 0xff;
+    if (hint) {
+//       if (hint->res_class == 0) fprintf(stderr, "no res_class!\n");
+//       else fprintf(stderr, "res_class: %s\n", hint->res_class);
+      for (unsigned i = 0; transClasses[i]; ++i) {
+	if (hint->res_class &&
+	    strncasecmp(hint->res_class, transClasses[i], 64) == 0)
+	  alpha = 0xdd;
+      }
+    } else {
+//       fprintf(stderr, "no hint\n");
+    }
+    setAlpha(alpha);
 
     {
         int x = client()->x();
@@ -1811,8 +1835,14 @@ void YFrameWindow::paint(Graphics &g, const YRect &/*r*/) {
 #endif
 #endif
 #ifdef CONFIG_LOOK_PIXMAP
-    case lookPixmap:
     case lookMetal:
+      {
+        g.fillRect(1, 1, width() - 2, height() - 2);
+        g.drawBorderS(0, 0, width() - 1, height() - 1,
+	  (fFocused? activeBorderBg : inactiveBorderBg));
+      }
+    break;
+    case lookPixmap:
     case lookGtk:
         {
             int n = focused() ? 1 : 0;

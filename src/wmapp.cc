@@ -126,6 +126,7 @@ static void registerProtocols() {
         _XA_NET_CURRENT_DESKTOP,
         _XA_NET_WM_DESKTOP,
         _XA_NET_ACTIVE_WINDOW,
+        _XA_NET_ACTIVE_WINDOW_FRAME,
         _XA_NET_CLOSE_WINDOW,
         _XA_NET_WM_STRUT,
         _XA_NET_WORKAREA,
