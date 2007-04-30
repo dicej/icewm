@@ -8,7 +8,7 @@ srcdir     = .
 top_srcdir = .
 
 PACKAGE = icewm
-VERSION = 1.2.23
+VERSION = 1.2.30
 
 PREFIX = /usr
 BINDIR = /usr/X11R6/bin
@@ -17,6 +17,7 @@ CFGDIR = /etc/icewm
 LOCDIR = /usr/share/locale
 KDEDIR = /usr/share
 DOCDIR = /usr/share/doc
+MANDIR = /usr/man
 GWMDIR = 
 
 INSTALL    = /usr/bin/install -c
@@ -24,7 +25,8 @@ INSTALLDIR = /usr/bin/install -c -m 755 -d
 INSTALLBIN = ${INSTALL}
 INSTALLLIB = ${INSTALL} -m 644
 INSTALLETC = ${INSTALL} -m 644
-MKFONTDIR  = /usr/X11R6/bin/mkfontdir
+INSTALLMAN = ${INSTALL} -m 644
+MKFONTDIR  = /usr/bin/mkfontdir
 
 DESTDIR     =
 
@@ -34,6 +36,7 @@ BINFILES    = $(top_srcdir)/src/icewm $(top_srcdir)/src/icewm-session $(top_srcd
 LIBFILES    = lib/preferences lib/winoptions lib/keys \
               lib/menu lib/toolbar # lib/programs
 DOCFILES    = README BUGS CHANGES COPYING AUTHORS INSTALL VERSION icewm.lsm
+MANFILES    = icewm.1
 XPMDIRS     = icons ledclock taskbar mailbox cursors
 THEMES      = nice motif win95 warp3 warp4 metal2 gtk2 Infadel2 nice2 \
               icedesert yellowmotif
@@ -128,6 +131,11 @@ install-nls: nls
 	@echo ------------------------------------------
 	@cd po; $(MAKE) install
 	@echo ------------------------------------------
+
+install-man:
+	@for man in $(MANFILES); do \
+		$(INSTALLMAN) doc/$$man.man $(DESTDIR)$(MANDIR)/man1/$$man; \
+	done
 
 install-gnome: gnome
 	@echo ------------------------------------------

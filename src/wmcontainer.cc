@@ -40,9 +40,10 @@ void YClientContainer::handleButton(const XButtonEvent &button) {
         (!useMouseWheel || (button.button != 4 && button.button != 5)))
     {
         if (focusOnClickClient) {
-            if (getFrame()->isFocusable(true) && !getFrame()->focused())
+            if (getFrame()->canFocus() && !getFrame()->focused())
                 firstClick = true;
-            doActivate = true;
+            if (!getFrame()->isTypeDock())
+                doActivate = true;
         }
         if (raiseOnClickClient) {
             doRaise = true;
@@ -179,7 +180,11 @@ void YClientContainer::handleMapRequest(const XMapRequestEvent &mapRequest) {
                              WinStateHidden |
                              WinStateRollup,
                              0);
-        getFrame()->focusOnMap();
+        bool doActivate = true;
+        getFrame()->updateFocusOnMap(doActivate);
+        if (doActivate) {
+            getFrame()->activateWindow(true);
+        }
     }
 }
 

@@ -10,9 +10,9 @@ LOCDIR =        /usr/share/locale
 DESTDIR = 
 
 SOURCES =       $(top_srcdir)/src/aapm.cc $(top_srcdir)/src/acpustatus.cc $(top_srcdir)/src/amailbox.cc $(top_srcdir)/src/apppstatus.cc $(top_srcdir)/src/aworkspaces.cc $(top_srcdir)/src/icehelp.cc $(top_srcdir)/src/icelist.cc $(top_srcdir)/src/icesame.cc $(top_srcdir)/src/icesh.cc $(top_srcdir)/src/iceskt.cc $(top_srcdir)/src/icesound.cc $(top_srcdir)/src/iceview.cc $(top_srcdir)/src/icewmbg.cc $(top_srcdir)/src/icewmhint.cc $(top_srcdir)/src/misc.cc $(top_srcdir)/src/movesize.cc $(top_srcdir)/src/testnetwmhints.cc $(top_srcdir)/src/testwinhints.cc $(top_srcdir)/src/themes.cc $(top_srcdir)/src/wmabout.cc $(top_srcdir)/src/wmapp.cc $(top_srcdir)/src/wmconfig.cc $(top_srcdir)/src/wmdialog.cc $(top_srcdir)/src/wmframe.cc $(top_srcdir)/src/wmoption.cc $(top_srcdir)/src/wmprog.cc $(top_srcdir)/src/wmsession.cc $(top_srcdir)/src/wmstatus.cc $(top_srcdir)/src/wmtaskbar.cc $(top_srcdir)/src/wmwinlist.cc $(top_srcdir)/src/wmwinmenu.cc $(top_srcdir)/src/yapp.cc $(top_srcdir)/src/ybutton.cc $(top_srcdir)/src/ycmdline.cc $(top_srcdir)/src/yconfig.cc $(top_srcdir)/src/ycursor.cc $(top_srcdir)/src/yfontcore.cc $(top_srcdir)/src/yfontxft.cc $(top_srcdir)/src/yicon.cc $(top_srcdir)/src/yimage.cc $(top_srcdir)/src/yinput.cc $(top_srcdir)/src/ylocale.cc $(top_srcdir)/src/ymenufile.cc $(top_srcdir)/src/ymenuitem.cc $(top_srcdir)/src/ymsgbox.cc $(top_srcdir)/src/yparser.cc $(top_srcdir)/src/ypaths.cc $(top_srcdir)/src/ypixbuf.cc $(top_srcdir)/src/ysmapp.cc $(top_srcdir)/src/yurl.cc $(top_srcdir)/src/yxapp.cc
-POFILES =	be.po bg.po ca.po cs.po de.po el.po en.po es.po fi.po fr.po hr.po hu.po id.po it.po ja.po ko.po lt.po lv.po nl.po no.po pl.po pt_BR.po ro.po ru.po sk.po sl.po sv.po tr.po uk.po vi.po zh_CN.po zh_TW.Big5.po
-POXFILES =	be.pox bg.pox ca.pox cs.pox de.pox el.pox en.pox es.pox fi.pox fr.pox hr.pox hu.pox id.pox it.pox ja.pox ko.pox lt.pox lv.pox nl.pox no.pox pl.pox pt_BR.pox ro.pox ru.pox sk.pox sl.pox sv.pox tr.pox uk.pox vi.pox zh_CN.pox zh_TW.Big5.pox
-MOFILES =	be.mo bg.mo ca.mo cs.mo de.mo el.mo en.mo es.mo fi.mo fr.mo hr.mo hu.mo id.mo it.mo ja.mo ko.mo lt.mo lv.mo nl.mo no.mo pl.mo pt_BR.mo ro.mo ru.mo sk.mo sl.mo sv.mo tr.mo uk.mo vi.mo zh_CN.mo zh_TW.Big5.mo
+POFILES =	be.po bg.po ca.po cs.po da.po de.po el.po en.po es.po fi.po fr.po hr.po hu.po id.po it.po ja.po ko.po lt.po lv.po mk.po nb.po nl.po pl.po pt_BR.po ro.po ru.po sk.po sl.po sv.po tr.po uk.po vi.po zh_CN.po zh_TW.Big5.po zh_TW.po
+POXFILES =	be.pox bg.pox ca.pox cs.pox da.pox de.pox el.pox en.pox es.pox fi.pox fr.pox hr.pox hu.pox id.pox it.pox ja.pox ko.pox lt.pox lv.pox mk.pox nb.pox nl.pox pl.pox pt_BR.pox ro.pox ru.pox sk.pox sl.pox sv.pox tr.pox uk.pox vi.pox zh_CN.pox zh_TW.Big5.pox zh_TW.pox
+MOFILES =	be.mo bg.mo ca.mo cs.mo da.mo de.mo el.mo en.mo es.mo fi.mo fr.mo hr.mo hu.mo id.mo it.mo ja.mo ko.mo lt.mo lv.mo mk.mo nb.mo nl.mo pl.mo pt_BR.mo ro.mo ru.mo sk.mo sl.mo sv.mo tr.mo uk.mo vi.mo zh_CN.mo zh_TW.Big5.mo zh_TW.mo
 
 INSTALL =       /usr/bin/install -c
 INSTALLDIR =    /usr/bin/install -c -m 755 -d
@@ -57,7 +57,7 @@ $(PACKAGE).pot: POTFILES.in
 
 # create new translations
 %.pox: %.po $(PACKAGE).pot
-	$(MSGMERGE) --indent --output-file $@ $< $(PACKAGE).pot
+	$(MSGMERGE) --indent --no-location --output-file $@ $< $(PACKAGE).pot
 
 # convert portable into machine objects
 .po.mo:
@@ -78,5 +78,11 @@ report.html: *.po Makefile
 	  done ) >$@
 	@cat $@
 
-upload-report: report.html
-	scp report.html massel@icewm.sf.net:icesf/libphp/nls.html
+#upload-report: report.html
+#	scp report.html massel@icewm.sf.net:icesf/libphp/nls.html
+
+stats:
+	for x in *.po ; do echo -ne "$$x:\t" `$(MSGFMT) --statistics $$x` ; done
+
+update: merge
+	for x in *.pox ; do cp -af $$x $${x%%pox}po ; done

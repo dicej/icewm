@@ -92,6 +92,9 @@ Atom _XA_NET_WM_WINDOW_TYPE_SPLASH;
 Atom _XA_NET_WM_NAME;
 Atom _XA_NET_WM_PID;
 
+Atom _XA_NET_WM_USER_TIME;
+Atom _XA_NET_WM_STATE_DEMANDS_ATTENTION;
+
 Atom _XA_KWM_WIN_ICON;
 Atom _XA_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR = 0;
 
@@ -307,6 +310,8 @@ static void initAtoms() {
 
         { &_XA_NET_WM_NAME, "_NET_WM_NAME" },
         { &_XA_NET_WM_PID, "_NET_WM_PID" },
+        { &_XA_NET_WM_USER_TIME, "_NET_WM_USER_TIME" },
+        { &_XA_NET_WM_STATE_DEMANDS_ATTENTION, "_NET_WM_STATE_DEMANDS_ATTENTION" },
 
         { &_XA_CLIPBOARD, "CLIPBOARD" },
         { &_XA_TARGETS, "TARGETS" },
@@ -376,7 +381,7 @@ void YXApplication::initModifiers() {
                     SuperMask = (1 << m);
                 if ((kc == XK_Hyper_L || kc == XK_Hyper_R) && HyperMask == 0)
                     HyperMask = (1 << m);
-                if (kc == XK_Mode_switch && ModeSwitchMask == 0)
+                if ((kc == XK_Mode_switch || kc == XK_ISO_Level3_Shift) && ModeSwitchMask == 0)
                     ModeSwitchMask = (1 << m);
             }
 
@@ -411,6 +416,9 @@ void YXApplication::initModifiers() {
 
     if (AltMask == 0)
         AltMask = Mod1Mask;
+
+    if (ModeSwitchMask & (AltMask | MetaMask | SuperMask | HyperMask))
+	ModeSwitchMask = 0;
 
     PRECONDITION(xapp->AltMask != 0);
     PRECONDITION(xapp->AltMask != ShiftMask);
@@ -504,33 +512,36 @@ void YXApplication::dispatchEvent(YWindow *win, XEvent &xev) {
 }
 
 void YXApplication::handleGrabEvent(YWindow *winx, XEvent &xev) {
-    YWindow *win = winx;
+    union {
+        YWindow *ptr;
+        XPointer xptr;
+    } win = { winx };
 
-    PRECONDITION(win != 0);
+    PRECONDITION(win.ptr != 0);
     if (fGrabTree) {
         if (xev.xbutton.subwindow != None) {
             if (XFindContext(display(),
                          xev.xbutton.subwindow,
                          windowContext,
-                         (XPointer *)&win) != 0);
+                         &(win.xptr)) != 0);
                 if (xev.type == EnterNotify || xev.type == LeaveNotify)
-                    win = 0;
+                    win.ptr = 0;
                 else
-                    win = fGrabWindow;
+                    win.ptr = fGrabWindow;
         } else {
             if (XFindContext(display(),
                          xev.xbutton.window,
                          windowContext,
-                         (XPointer *)&win) != 0)
+                         &(win.xptr)) != 0)
                 if (xev.type == EnterNotify || xev.type == LeaveNotify)
-                    win = 0;
+                    win.ptr = 0;
                 else
-                    win = fGrabWindow;
+                    win.ptr = fGrabWindow;
         }
-        if (win == 0)
+        if (win.ptr == 0)
             return ;
         {
-            YWindow *p = win;
+            YWindow *p = win.ptr;
             while (p) {
                 if (p == fXGrabWindow)
                     break;
@@ -540,16 +551,16 @@ void YXApplication::handleGrabEvent(YWindow *winx, XEvent &xev) {
                 if (xev.type == EnterNotify || xev.type == LeaveNotify)
                     return ;
                 else
-                    win = fGrabWindow;
+                    win.ptr = fGrabWindow;
             }
         }
         if (xev.type == EnterNotify || xev.type == LeaveNotify)
-            if (win != fGrabWindow)
+            if (win.ptr != fGrabWindow)
                 return ;
         if (fGrabWindow != fXGrabWindow)
-            win = fGrabWindow;
+            win.ptr = fGrabWindow;
     }
-    dispatchEvent(win, xev);
+    dispatchEvent(win.ptr, xev);
 }
 
 void YXApplication::replayEvent() {
@@ -884,14 +895,17 @@ bool YXApplication::handleXEvents() {
 
 void YXApplication::handleWindowEvent(Window xwindow, XEvent &xev) {
     int rc = 0;
-    YWindow *window = 0;
+    union {
+        YWindow *ptr;
+        XPointer xptr;
+    } window = { 0 };
 
     if ((rc = XFindContext(display(),
                            xwindow,
                            windowContext,
-                           (XPointer *)&window)) == 0)
+                           &(window.xptr))) == 0)
     {
-         window->handleEvent(xev);
+         window.ptr->handleEvent(xev);
     } else {
         if (xev.type == MapRequest) {
 	// !!! java seems to do this ugliness

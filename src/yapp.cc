@@ -280,7 +280,7 @@ int YApplication::mainLoop() {
 
             sigprocmask(SIG_UNBLOCK, &signalMask, NULL);
 
-            rc = select(sizeof(fd_set),
+            rc = select(sizeof(fd_set) * 8,
                         SELECT_TYPE_ARG234 &read_fds,
                         SELECT_TYPE_ARG234 &write_fds,
                         0,
@@ -403,7 +403,7 @@ void YApplication::closeFiles() {
                 sprintf(path, "/proc/%d/fd/%d", getpid(), i);
                 readlink(path, buf, sizeof(buf) - 1);
 
-                warn("File still open: fd=%d, target='%s'", i, buf);
+                warn("File still open: fd=%d, target='%s' (missing FD_CLOEXEC?)", i, buf);
                 warn("Closing file descriptor: %d", i);
                 close (i);
             }

@@ -215,7 +215,7 @@ void YFrameWindow::layoutShape() {
         Pixmap shape(YPixmap::createMask(width(), height()));
         Graphics g(shape, width(), height());
 
-        g.setColor(YColor::white);
+        g.setColorPixel(1);
         g.fillRect(0, 0, width(), height());
 
         const int xTL(frameTL[t][a] != null ? frameTL[t][a]->width() : 0),
@@ -359,14 +359,14 @@ void YFrameWindow::positionButton(YFrameButton *b, int &xPos, bool onRight) {
     /// !!! clean this up
     if (b == fMenuButton) {
         const unsigned bw((wmLook == lookPixmap || wmLook == lookMetal ||
-                           wmLook == lookGtk) &&
+                           wmLook == lookGtk || wmLook == lookFlat ) &&
                           showFrameIcon || b->getImage(0) == null ?
                           titleY() : b->getImage(0)->width());
 
         if (onRight) xPos -= bw;
         b->setGeometry(YRect(xPos, 0, bw, titleY()));
         if (!onRight) xPos += bw;
-    } else if (wmLook == lookPixmap || wmLook == lookMetal || wmLook == lookGtk) {
+    } else if (wmLook == lookPixmap || wmLook == lookMetal || wmLook == lookGtk || wmLook == lookFlat ) {
         const unsigned bw(b->getImage(0) != null ? b->getImage(0)->width() : titleY());
 
         if (onRight) xPos -= bw;
@@ -622,7 +622,7 @@ bool YFrameWindow::Overlaps(bool above) {
     else
         f = next();
 
-    while (f){
+    while (f) {
         if (!f->isMinimized() && !f->isHidden() && f->visibleOn(curWorkspace)) {
             w2x2 = f->x() + (int)f->width() - 1;
             w2y2 = f->y() + (int)f->height() - 1;
@@ -645,7 +645,7 @@ bool YFrameWindow::Overlaps(bool above) {
                 }
             }
             D = w2y2 >= y();
-            if (x() >= f->x()){
+            if (x() >= f->x()) {
                 if (C) {
                     if (B && D) {
                         return true;

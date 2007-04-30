@@ -68,10 +68,9 @@ be executable, must be on RedHat). Mine looks something like this:</P>
 # setup touchpad and the external mouse
 xset m 7 2
 xinput set-ptr-feedback 0 7 1.9 1
-# run initial programs
-uxterm &amp;
-# start icewm, and run xterm if it crashes (just to be safe)
-exec icewm-session || exec xterm -fg red
+
+# start icewm-session
+exec icewm-session
 </PRE>
 </P>
 <P>The xterm on the last line is there simply to make sure that your X
@@ -84,7 +83,7 @@ HP-UX with HP VUE. If you are running xdm or some other login program
 check it's manpage for the correct place to start the window manager
 (usually &nbsp;/.xsession or &nbsp;/.Xsession, sometimes also &nbsp;/.xinitrc.os5).</P>
 
-<H2><A NAME="ss3.3">3.3</A> <A HREF="icewm.html#toc3.3">Startup, restart and shutdown scripts</A>
+<H2><A NAME="ss3.3">3.3</A> <A HREF="icewm.html#toc3.3">Startup and shutdown scripts</A>
 </H2>
 
 
@@ -105,14 +104,6 @@ manager is detected.</P>
 
 gnome-terminal --geometry 80x25+217+235 &amp;
 xscreensaver &amp;
-</PRE>
-</P>
-<P>Example (restart):
-<PRE>
-#!/bin/bash
-
-xsri --emblem=/usr/share/pixmaps/redhat/redhat-emboss.png \
-     --emboss --geometry=+0+48 --vgradient --color=\#567 --color2=\#123 &amp;
 </PRE>
 </P>
 <P><B>Hint: </B> 

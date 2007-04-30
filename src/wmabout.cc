@@ -24,7 +24,7 @@ AboutDlg *aboutDlg = 0;
 
 AboutDlg::AboutDlg(): YDialog() {
     char const *version("IceWM "VERSION" ("HOSTOS"/"HOSTCPU")");
-    char *copyright(strJoin("Copyright ", _("(C)"), " 1997-2004 Marko Macek, ",
+    char *copyright(strJoin("Copyright ", _("(C)"), " 1997-2005 Marko Macek, ",
                             _("(C)"), " 2001 Mathias Hasselmann",
                             NULL));
 
@@ -137,7 +137,7 @@ void AboutDlg::showFocused() {
         getFrame()->setNormalPositionOuter(
             dx + dw / 2 - getFrame()->width() / 2,
             dy + dh / 2 - getFrame()->height() / 2);
-        getFrame()->activate(true);
+        getFrame()->activateWindow(true);
     }
 }
 

@@ -174,7 +174,7 @@ void TaskBarApp::paint(Graphics &g, const YRect &/*r*/) {
             } else if (wmLook == lookGtk) {
                 g.drawBorderG(0, 0, width() - 1, height() - 1, false);
             }
-            else
+            else if (wmLook != lookFlat)
                 g.drawBorderW(0, 0, width() - 1, height() - 1, false);
         } else {
             p = 1;
@@ -184,12 +184,12 @@ void TaskBarApp::paint(Graphics &g, const YRect &/*r*/) {
             } else if (wmLook == lookGtk) {
                 g.drawBorderG(0, 0, width() - 1, height() - 1, true);
             }
-            else
+            else if (wmLook != lookFlat)
                 g.drawBorderW(0, 0, width() - 1, height() - 1, true);
         }
 
-        int const dp(wmLook == lookMetal ? 2 : p);
-        int const ds(wmLook == lookMetal ? 4 : 3);
+        int const dp(wmLook == lookFlat ? 0: wmLook == lookMetal ? 2 : p);
+        int const ds(wmLook == lookFlat ? 0: wmLook == lookMetal ? 4 : 3);
 
         if (width() > ds && height() > ds) {
 #ifdef CONFIG_GRADIENTS
@@ -237,7 +237,7 @@ void TaskBarApp::paint(Graphics &g, const YRect &/*r*/) {
             int const tx = 3 + iconSize;
             int const ty = max(2,
                                (height() + font->height() -
-                                (wmLook == lookMetal ? 2 : 1)) / 2 -
+                                ((wmLook == lookMetal || wmLook == lookFlat) ? 2 : 1)) / 2 -
                                font->descent());
             int const wm = width() - p - 3 - iconSize - 3;
 
@@ -390,11 +390,15 @@ TaskBarApp *TaskPane::addApp(YFrameWindow *frame) {
 
     if (tapp != 0) {
         insert(tapp);
+#if 0
         tapp->show();
         if (!frame->visibleOn(manager->activeWorkspace()) &&
             !taskBarShowAllWindows)
             tapp->setShown(0);
+        if (frame->owner() != 0 && !taskBarShowTransientWindows)
+            tapp->setShown(0);
         relayout();
+#endif
     }
     return tapp;
 }
@@ -428,8 +432,7 @@ void TaskPane::relayoutNow() {
             tc++;
         a = a->getNext();
     }
-
-    if (tc < 3) tc = 3;
+    if (tc < taskBarButtonWidthDivisor) tc = taskBarButtonWidthDivisor;
 
     int leftX = 0;
     int rightX = width();

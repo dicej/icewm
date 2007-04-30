@@ -23,7 +23,7 @@ public:
     YFrameWindow(YWindow *parent);
     virtual ~YFrameWindow();
 
-    void doManage(YFrameClient *client);
+    void doManage(YFrameClient *client, bool &doActivate, bool &requestFocus);
     void afterManage();
     void manage(YFrameClient *client);
     void unmanage(bool reparent = true);
@@ -99,14 +99,14 @@ public:
     void loseWinFocus();
     void setWinFocus();
     bool focused() const { return fFocused; }
-    void focusOnMap();
+    void updateFocusOnMap(bool &doActivate);
 
     YFrameClient *client() const { return fClient; }
     YFrameTitleBar *titlebar() const { return fTitleBar; }
     YClientContainer *container() const { return fClientContainer; }
 
 #ifdef WMSPEC_HINTS
-    void YFrameWindow::startMoveSize(int x, int y,
+    void startMoveSize(int x, int y,
                                      int direction);
 #endif
 
@@ -136,7 +136,7 @@ public:
     void constrainPositionByModifier(int &x, int &y, const XMotionEvent &motion);
     void constrainMouseToWorkspace(int &x, int &y);
 
-    void getDefaultOptions();
+    void getDefaultOptions(bool &doActivate);
 
     bool canSize(bool boriz = true, bool vert = true);
     bool canMove();
@@ -150,7 +150,7 @@ public:
     bool canFullscreen() { return true; }
     bool Overlaps(bool below);
 
-    void insertFrame();
+    void insertFrame(bool top);
     void removeFrame();
     void setAbove(YFrameWindow *aboveFrame); // 0 = at the bottom
     void setBelow(YFrameWindow *belowFrame); // 0 = at the top
@@ -303,6 +303,7 @@ public:
     YFrameWindow *transient() const { return fTransient; }
     YFrameWindow *nextTransient() const { return fNextTransient; }
     YFrameWindow *owner() const { return fOwner; }
+    YFrameWindow *mainOwner();
 
 #ifndef LITE
     YIcon *getClientIcon() const { return fFrameIcon; }
@@ -338,6 +339,7 @@ public:
     void setTypeDesktop(bool typeDesktop) { fTypeDesktop = typeDesktop; }
     void setTypeDock(bool typeDock) { fTypeDock = typeDock; }
     void setTypeSplash(bool typeSplash) { fTypeSplash = typeSplash; }
+    bool isTypeDock() { return fTypeDock; }
 
     long getWorkspace() const { return fWinWorkspace; }
     void setWorkspace(long workspace);
@@ -357,6 +359,7 @@ public:
     bool isMaximizedFully() const { return isMaximizedVert() && isMaximizedHoriz(); }
     bool isMinimized() const { return (getState() & WinStateMinimized) ? true : false; }
     bool isHidden() const { return (getState() & WinStateHidden) ? true : false; }
+    bool isSkipTaskBar() const { return (getState() & WinStateSkipTaskBar) ? true : false; }
     bool isRollup() const { return (getState() & WinStateRollup) ? true : false; }
     bool isSticky() const { return (getState() & WinStateAllWorkspaces) ? true : false; }
     //bool isHidWorkspace() { return (getState() & WinStateHidWorkspace) ? true : false; }
@@ -381,7 +384,9 @@ public:
 
     bool isModal();
     bool hasModal();
-    bool isFocusable(bool takeFocus);
+    bool canFocus();
+    bool canFocusByMouse();
+    bool avoidFocus();
     bool getInputFocusHint();
 
     bool inWorkArea() const;
@@ -545,8 +550,7 @@ private:
     int getRightCoord(int Mx, YFrameWindow **w, int count);
 
     // only focus if mouse moves
-    int fMouseFocusX, fMouseFocusY;
-
+    //static int fMouseFocusX, fMouseFocusY;
 
     void setGeometry(const YRect &);
     void setPosition(int, int);

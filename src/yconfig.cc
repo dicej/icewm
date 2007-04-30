@@ -55,6 +55,23 @@ char * findPath(const char *path, int mode, const char *name, bool /*path_relati
                 if (!access(prog, mode) && isreg(prog))
                     return newstr(prog);
 #endif
+                // If prog isn't executable and doesn't end with .xpm or .png, append .png and try the search
+                if (!(mode & X_OK) && 
+                     (strlen(prog) + 4 < sizeof(prog)) &&
+                     (strlen(prog) > 4) && 
+                     (strcmp((prog + strlen(prog) - 4), ".png") ||
+                      strcmp((prog + strlen(prog) - 4), ".xpm"))) 
+                {
+                   strcat(prog,".png");
+#ifdef __EMX__
+                   if (!access(prog, 0))
+                       return newstr(prog);
+#else
+                   if (!access(prog, mode) && isreg(prog))
+                       return newstr(prog);
+#endif
+                }
+
             }
         }
     }
@@ -165,6 +182,9 @@ bool parseKey(const char *arg, KeySym *key, unsigned int *mod) {
             arg += 6;
         } else if (strncmp("Hyper+", arg, 6) == 0) {
             *mod |= kfHyper;
+            arg += 6;
+        } else if (strncmp("AltGr+", arg, 6) == 0) {
+            *mod |= kfAltGr;
             arg += 6;
         } else
             break;

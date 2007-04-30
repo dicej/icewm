@@ -303,6 +303,8 @@ bool YInputLine::handleKey(const XKeyEvent &key) {
                 }
             }
             break;
+	case XK_Tab:
+	    break;
         default:
             {
                 char s[16];
@@ -410,7 +412,10 @@ void YInputLine::handleSelection(const XSelectionEvent &selection) {
         long extra;
         int format;
         long nitems;
-        char *data;
+        union {
+            char *ptr;
+            unsigned char *xptr;
+        } data;
 
         XGetWindowProperty(xapp->display(),
                            selection.requestor, selection.property,
@@ -418,13 +423,13 @@ void YInputLine::handleSelection(const XSelectionEvent &selection) {
                            selection.target, &type, &format,
                            (unsigned long *)&nitems,
                            (unsigned long *)&extra,
-                           (unsigned char **)&data);
+                           &(data.xptr));
 
-        if (nitems > 0 && data != NULL) {
-            replaceSelection(data, nitems);
+        if (nitems > 0 && data.ptr != NULL) {
+            replaceSelection(data.ptr, nitems);
         }
-        if (data != NULL)
-            XFree(data);
+        if (data.xptr != NULL)
+            XFree(data.xptr);
     }
 }
 

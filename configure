@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CXX_LINK INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CXXCPP EGREP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XGETTEXT MSGMERGE MSGFMT NLS_SOURCES NLS_POFILES NLS_POXFILES NLS_MOFILES XFT_CONFIG ESD_CONFIG IMLIB_CONFIG MKFONTDIR GNOME1_CONFIG PKG_CONFIG GNOME_VER CONFIG_GNOME1_MENU_DIR CONFIG_GNOME2_MENU_DIR CONFIG_KDE_MENU_DIR PACKAGE VERSION HOSTOS HOSTCPU DEBUG GCCDEP CORE_CFLAGS IMAGE_CFLAGS AUDIO_CFLAGS GNOME1_CFLAGS GNOME2_CFLAGS CORE_LIBS IMAGE_LIBS AUDIO_LIBS GNOME1_LIBS GNOME2_LIBS PREFIX BINDIR LIBDIR CFGDIR LOCDIR KDEDIR DOCDIR GWMDIR BASEOBJS BASEBINS TESTOBJS TESTBINS TARGETS TARGETS_INSTALL APPLICATIONS TESTCASES BINFILES INSTALL INSTALLDIR INSTALLBIN INSTALLLIB INSTALLETC LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT CXX_LINK INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CXXCPP EGREP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XGETTEXT MSGMERGE MSGFMT NLS_SOURCES NLS_POFILES NLS_POXFILES NLS_MOFILES XFT_CONFIG PKG_CONFIG ESD_CONFIG IMLIB_CONFIG MKFONTDIR GNOME1_CONFIG GNOME_VER CONFIG_GNOME1_MENU_DIR CONFIG_GNOME2_MENU_DIR CONFIG_KDE_MENU_DIR PACKAGE VERSION HOSTOS HOSTCPU DEBUG GCCDEP CORE_CFLAGS IMAGE_CFLAGS AUDIO_CFLAGS GNOME1_CFLAGS GNOME2_CFLAGS CORE_LIBS IMAGE_LIBS AUDIO_LIBS GNOME1_LIBS GNOME2_LIBS PREFIX BINDIR LIBDIR CFGDIR LOCDIR KDEDIR DOCDIR MANDIR GWMDIR BASEOBJS BASEBINS TESTOBJS TESTBINS TARGETS TARGETS_INSTALL APPLICATIONS TESTCASES BINFILES INSTALL INSTALLDIR INSTALLBIN INSTALLLIB INSTALLETC INSTALLMAN LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -7146,7 +7146,7 @@ ac_x_header_dirs='
 /usr/openwin/share/include'
 
 if test "$ac_x_includes" = no; then
-  # Guess where to find include files, by looking for Intrinsic.h.
+  # Guess where to find include files, by looking for Xlib.h.
   # First, try using that file with no special directory specified.
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -7154,7 +7154,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <X11/Intrinsic.h>
+#include <X11/Xlib.h>
 _ACEOF
 if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
@@ -7181,7 +7181,7 @@ else
 sed 's/^/| /' conftest.$ac_ext >&5
 
   for ac_dir in $ac_x_header_dirs; do
-  if test -r "$ac_dir/X11/Intrinsic.h"; then
+  if test -r "$ac_dir/X11/Xlib.h"; then
     ac_x_includes=$ac_dir
     break
   fi
@@ -7195,18 +7195,18 @@ if test "$ac_x_libraries" = no; then
   # See if we find them without any special options.
   # Don't add to $LIBS permanently.
   ac_save_LIBS=$LIBS
-  LIBS="-lXt $LIBS"
+  LIBS="-lX11 $LIBS"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <X11/Intrinsic.h>
+#include <X11/Xlib.h>
 int
 main ()
 {
-XtMalloc (0)
+XrmInitialize ()
   ;
   return 0;
 }
@@ -10354,6 +10354,53 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
+    if test "${XFT_CONFIG}" == ""; then
+      # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PKG_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+
+if test -n "$PKG_CONFIG"; then
+  echo "$as_me:$LINENO: result: $PKG_CONFIG" >&5
+echo "${ECHO_T}$PKG_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+      if test "${PKG_CONFIG}" != ""; then
+        ${PKG_CONFIG} xft 2>/dev/null
+        if test $? -eq 0 ; then
+          XFT_CONFIG='pkg-config xft'
+        fi
+      fi
+    fi
     if test "${XFT_CONFIG}" != ""; then
       XFT_CFLAGS=`${XFT_CONFIG} --cflags`
       XFT_LIBS=`${XFT_CONFIG} --libs`
@@ -11825,7 +11872,6 @@ else
    docdir='${datadir}/doc'
 fi;
 
-
 # Check whether --enable-menus-gnome1 or --disable-menus-gnome1 was given.
 if test "${enable_menus_gnome1+set}" = set; then
   enableval="$enable_menus_gnome1"
@@ -12009,6 +12055,7 @@ HOSTCPU=`uname -m || echo unknown`
 
 
 
+
   ice_stored_prefix="${prefix}"
   test "${prefix}" = "NONE" && prefix="${ac_default_prefix}"
 
@@ -12135,6 +12182,25 @@ HOSTCPU=`uname -m || echo unknown`
   exec_prefix="${ice_stored_exec_prefix}"
 
 
+  ice_stored_prefix="${prefix}"
+  test "${prefix}" = "NONE" && prefix="${ac_default_prefix}"
+
+  ice_stored_exec_prefix="${exec_prefix}"
+  test "${exec_prefix}" = "NONE" && exec_prefix="${prefix}"
+
+  MANDIR=`eval echo \""${mandir}"\"`
+
+  ice_previous_value=''
+  until test "${ice_previous_value}" = "${MANDIR}"; do
+    ice_previous_value="${MANDIR}"
+    MANDIR=`eval echo "${MANDIR}"`
+  done
+
+  prefix="${ice_stored_prefix}"
+  exec_prefix="${ice_stored_exec_prefix}"
+
+
+
 
 
 
@@ -12185,6 +12251,8 @@ INSTALLBIN="${INSTALL_PROGRAM}"
 INSTALLLIB="${INSTALL_DATA}"
 
 INSTALLETC="${INSTALL_DATA}"
+
+INSTALLMAN="${INSTALL_DATA}"
 
 
           ac_config_commands="$ac_config_commands config.status"
@@ -12861,11 +12929,11 @@ s,@NLS_POFILES@,$NLS_POFILES,;t t
 s,@NLS_POXFILES@,$NLS_POXFILES,;t t
 s,@NLS_MOFILES@,$NLS_MOFILES,;t t
 s,@XFT_CONFIG@,$XFT_CONFIG,;t t
+s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@ESD_CONFIG@,$ESD_CONFIG,;t t
 s,@IMLIB_CONFIG@,$IMLIB_CONFIG,;t t
 s,@MKFONTDIR@,$MKFONTDIR,;t t
 s,@GNOME1_CONFIG@,$GNOME1_CONFIG,;t t
-s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@GNOME_VER@,$GNOME_VER,;t t
 s,@CONFIG_GNOME1_MENU_DIR@,$CONFIG_GNOME1_MENU_DIR,;t t
 s,@CONFIG_GNOME2_MENU_DIR@,$CONFIG_GNOME2_MENU_DIR,;t t
@@ -12893,6 +12961,7 @@ s,@CFGDIR@,$CFGDIR,;t t
 s,@LOCDIR@,$LOCDIR,;t t
 s,@KDEDIR@,$KDEDIR,;t t
 s,@DOCDIR@,$DOCDIR,;t t
+s,@MANDIR@,$MANDIR,;t t
 s,@GWMDIR@,$GWMDIR,;t t
 s,@BASEOBJS@,$BASEOBJS,;t t
 s,@BASEBINS@,$BASEBINS,;t t
@@ -12908,6 +12977,7 @@ s,@INSTALLDIR@,$INSTALLDIR,;t t
 s,@INSTALLBIN@,$INSTALLBIN,;t t
 s,@INSTALLLIB@,$INSTALLLIB,;t t
 s,@INSTALLETC@,$INSTALLETC,;t t
+s,@INSTALLMAN@,$INSTALLMAN,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -13794,4 +13864,26 @@ echo "${ECHO_T}       KDEDIR: $ice_value" >&6
 
   echo "$as_me:$LINENO: result:        DOCDIR: $ice_value" >&5
 echo "${ECHO_T}       DOCDIR: $ice_value" >&6
+)
+(
+
+  ice_stored_prefix="${prefix}"
+  test "${prefix}" = "NONE" && prefix="${ac_default_prefix}"
+
+  ice_stored_exec_prefix="${exec_prefix}"
+  test "${exec_prefix}" = "NONE" && exec_prefix="${prefix}"
+
+  ice_value=`eval echo \""$mandir"\"`
+
+  ice_previous_value=''
+  until test "${ice_previous_value}" = "${ice_value}"; do
+    ice_previous_value="${ice_value}"
+    ice_value=`eval echo "${ice_value}"`
+  done
+
+  prefix="${ice_stored_prefix}"
+  exec_prefix="${ice_stored_exec_prefix}"
+
+  echo "$as_me:$LINENO: result:        MANDIR: $ice_value" >&5
+echo "${ECHO_T}       MANDIR: $ice_value" >&6
 )
