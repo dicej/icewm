@@ -165,7 +165,7 @@
 /* #undef HAVE_LINUX_TASKS_H */
 
 /* Define to 1 if you have the <linux/threads.h> header file. */
-#define HAVE_LINUX_THREADS_H 1
+/* #undef HAVE_LINUX_THREADS_H */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1

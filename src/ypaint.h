@@ -141,7 +141,7 @@ public:
 private:
     YPixmap(const ref<YPixmap> &pixmap, int newWidth, int newHeight);
 public:
-    static ref<YPixmap> scale(ref<YPixmap> source, int width, int height);
+    static ref<YPixmap> scale(ref<YPixmap> source, int const width, int const height);
 
     Pixmap pixmap() const { return fPixmap; }
     Pixmap mask() const { return fMask; }
@@ -245,6 +245,7 @@ public:
                      int const mode);
     void fillArc(int x, int y, int width, int height, int a1, int a2);
     void setColor(YColor * aColor);
+    void setColorPixel(unsigned long pixel);
     void setFont(ref<YFont> aFont);
     void setThinLines(void) { setLineWidth(0); }
     void setWideLines(int width = 1) { setLineWidth(width >= 1 ? width : 1); }

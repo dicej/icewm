@@ -111,6 +111,14 @@ int YWindow::fClickDrag = 0;
 unsigned int YWindow::fClickButton = 0;
 unsigned int YWindow::fClickButtonDown = 0;
 
+unsigned int ignore_enternotify_hack = 0; // credits to ahwm
+
+static void update_ignore_enternotify_hack(const XEvent &event) {
+    ignore_enternotify_hack = event.xany.serial;
+    if (xapp && xapp->display())
+        XSync(xapp->display(), False);
+}
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -571,6 +579,7 @@ void YWindow::handleEvent(const XEvent &event) {
         break;
 
     case ConfigureNotify:
+        update_ignore_enternotify_hack(event);
 #if 1
          {
              XEvent new_event, old_event;
@@ -613,10 +622,12 @@ void YWindow::handleEvent(const XEvent &event) {
         handleGraphicsExpose(event.xgraphicsexpose); break;
 
     case MapNotify:
+        update_ignore_enternotify_hack(event);
         handleMapNotify(event.xmap);
         break;
 
     case UnmapNotify:
+        update_ignore_enternotify_hack(event);
         handleUnmapNotify(event.xunmap);
         break;
 
@@ -634,6 +645,14 @@ void YWindow::handleEvent(const XEvent &event) {
 
     case SelectionNotify:
         handleSelection(event.xselection);
+        break;
+
+    case GravityNotify:
+        update_ignore_enternotify_hack(event);
+        break;
+
+    case CirculateNotify:
+        update_ignore_enternotify_hack(event);
         break;
 
     default:
@@ -709,13 +728,15 @@ void YWindow::paintExpose(int ex, int ey, int ew, int eh) {
 
 
     YRect r1(ex, ey, ew, eh);
-    if (fDoubleBuffer) {
-        ref<YPixmap> pixmap = beginPaint(r1);
-        Graphics g1(pixmap, ex, ey);
-        paint(g1, r1);
-        endPaint(g, pixmap, r1);
-    } else {
-        paint(g, r1);
+    if (r1.width() > 0 && r1.height() > 0) {
+        if (fDoubleBuffer) {
+            ref<YPixmap> pixmap = beginPaint(r1);
+            Graphics g1(pixmap, ex, ey);
+            paint(g1, r1);
+            endPaint(g, pixmap, r1);
+        } else {
+            paint(g, r1);
+        }
     }
     g.resetClip();
 
@@ -1409,7 +1430,7 @@ void YWindow::handleXdnd(const XClientMessageEvent &message) {
             YWindow *win;
 
             if (XFindContext(xapp->display(), XdndDropTarget, windowContext,
-                             (XPointer *)&win) == 0)
+                             (XPointer *)(void *)&win) == 0)
                 win->handleDNDLeave();
             XdndDropTarget = None;
         }
@@ -1450,27 +1471,40 @@ void YWindow::handleXdnd(const XClientMessageEvent &message) {
 
         if (target != XdndDropTarget) {
             if (XdndDropTarget) {
-                YWindow *win;
+                union {
+                    YWindow *ptr;
+                    XPointer xptr;
+                } win;
 
                 if (XFindContext(xapp->display(), XdndDropTarget, windowContext,
-                                 (XPointer *)&win) == 0)
-                    win->handleDNDLeave();
+                                 &win.xptr) == 0)
+                    win.ptr->handleDNDLeave();
             }
             XdndDropTarget = target;
             if (XdndDropTarget) {
-                YWindow *win;
+                union {
+                    YWindow *ptr;
+                    XPointer xptr;
+                } win;
 
                 if (XFindContext(xapp->display(), XdndDropTarget, windowContext,
-                                 (XPointer *)&win) == 0)
+                                 &win.xptr) == 0)
                 {
-                    win->handleDNDEnter();
-                    pwin = win;
+                    win.ptr->handleDNDEnter();
+                    pwin = win.ptr;
                 }
             }
         }
         if (pwin == 0 && XdndDropTarget) { // !!! optimize this
+            union {
+                YWindow *ptr;
+                XPointer xptr;
+            } win;
             if (XFindContext(xapp->display(), XdndDropTarget, windowContext,
-                             (XPointer *)&pwin) != 0)
+                             &win.xptr) == 0)
+            {
+                pwin = win.ptr;
+            } else
                 pwin = 0;
         }
         if (pwin)
@@ -1596,13 +1630,16 @@ void YWindow::grabVKey(int key, unsigned int vm) {
        m |= xapp->SuperMask;
     if (vm & kfHyper)
        m |= xapp->HyperMask;
+    if (vm & kfAltGr)
+        m |= xapp->ModeSwitchMask;
 
     MSG(("grabVKey %d %d %d", key, vm, m));
     if (key != 0 && (vm == 0 || m != 0)) {
         if ((!(vm & kfMeta) || xapp->MetaMask) &&
             (!(vm & kfAlt) || xapp->AltMask) &&
            (!(vm & kfSuper) || xapp->SuperMask) &&
-            (!(vm & kfHyper) || xapp->HyperMask))
+            (!(vm & kfHyper) || xapp->HyperMask) &&
+            (!(vm & kfAltGr) || xapp->ModeSwitchMask))
         {
             grabKey(key, m);
         }
@@ -1619,6 +1656,8 @@ void YWindow::grabVKey(int key, unsigned int vm) {
                 m |= xapp->SuperMask;
             if (vm & kfHyper)
                 m |= xapp->HyperMask;
+            if (vm & kfAltGr)
+                m |= xapp->ModeSwitchMask;
             grabKey(key, m);
         }
     }
@@ -1639,6 +1678,8 @@ void YWindow::grabVButton(int button, unsigned int vm) {
        m |= xapp->SuperMask;
     if (vm & kfHyper)
        m |= xapp->HyperMask;
+    if (vm & kfAltGr)
+       m |= xapp->ModeSwitchMask;
 
     MSG(("grabVButton %d %d %d", button, vm, m));
 
@@ -1646,7 +1687,8 @@ void YWindow::grabVButton(int button, unsigned int vm) {
         if ((!(vm & kfMeta) || xapp->MetaMask) &&
             (!(vm & kfAlt) || xapp->AltMask) &&
            (!(vm & kfSuper) || xapp->SuperMask) &&
-            (!(vm & kfHyper) || xapp->HyperMask))
+            (!(vm & kfHyper) || xapp->HyperMask) &&
+            (!(vm & kfAltGr) || xapp->ModeSwitchMask))
         {
             grabButton(button, m);
         }
@@ -1663,6 +1705,8 @@ void YWindow::grabVButton(int button, unsigned int vm) {
                 m |= xapp->SuperMask;
             if (vm & kfHyper)
                 m |= xapp->HyperMask;
+            if (vm & kfAltGr)
+                m |= xapp->ModeSwitchMask;
             grabButton(button, m);
         }
     }
@@ -1692,6 +1736,8 @@ unsigned int YWindow::VMod(int m) {
        vm |= kfSuper;
     if (m1 & xapp->HyperMask)
        vm |= kfHyper;
+    if (m1 & xapp->ModeSwitchMask)
+       vm |= kfAltGr;
 
     return vm;
 }

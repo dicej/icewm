@@ -1,6 +1,6 @@
 PACKAGE = icewm
-VERSION = 1.2.20
-HOSTOS  = Linux 2.6.10-9-amd64-k8
+VERSION = 1.2.30
+HOSTOS  = Linux 2.6.11-9-amd64-k8
 HOSTCPU = x86_64
 
 LIBDIR = /usr/local/icewm/share/icewm

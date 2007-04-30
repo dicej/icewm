@@ -52,9 +52,9 @@ YTimer *WorkspaceButton::fRaiseTimer(NULL);
 
 TaskBar *taskBar = 0;
 
-static YColor *taskBarBg = 0;
+YColor *taskBarBg = 0;
 
-static ref<YIconImage> icewmImage;
+static ref<YIconImage> startImage;
 static ref<YIconImage> windowsImage;
 static ref<YIconImage> showDesktopImage;
 static ref<YIconImage> collapseImage;
@@ -70,28 +70,26 @@ ref<YPixbuf> taskbuttonminimizedPixbuf;
 #endif
 
 static void initPixmaps() {
-#ifndef ICEWM_PIXMAP
-#define ICEWM_PIXMAP "icewm.xpm"
-#endif
-
-#ifndef START_PIXMAP
-#define START_PIXMAP "linux.xpm"
-/*
-#define START_PIXMAP "debian.xpm"
-#define START_PIXMAP "bsd-daemon.xpm"
-#define START_PIXMAP "start.xpm"
-#define START_PIXMAP "xfree86os2.xpm"
-*/
-#endif
     YResourcePaths const paths;
 
     char const * base("taskbar/");
     YResourcePaths themedirs(paths, base, true);
     YResourcePaths subdirs(paths, base);
 
-    if ((icewmImage = themedirs.loadImage(base, ICEWM_PIXMAP)) == null &&
-        (icewmImage = themedirs.loadImage(base, START_PIXMAP)) == null)
-        icewmImage = subdirs.loadImage(base, ICEWM_PIXMAP);
+    /* 
+     * that sucks, a neccessary workaround for differering startmenu pixmap
+     * filename. This will be unified and be a forced standard in
+     * icewm-2 
+     */
+    startImage = themedirs.loadImage(base, "start.xpm");
+    if (startImage == null || !startImage->valid())
+        startImage = themedirs.loadImage(base, "linux.xpm");
+    if (startImage == null || !startImage->valid())
+        startImage = themedirs.loadImage(base, "icewm.xpm");
+    if (startImage == null || !startImage->valid())
+        startImage = subdirs.loadImage(base, "icewm.xpm");
+    if (startImage == null || !startImage->valid())
+        startImage = subdirs.loadImage(base, "start.xpm");
 
     windowsImage = subdirs.loadImage(base, "windows.xpm");
     showDesktopImage = subdirs.loadImage(base, "desktop.xpm");
@@ -184,7 +182,7 @@ YFrameClient(aParent, 0) INIT_GRADIENT(fGradient, NULL)
                     WinHintsSkipTaskBar);
 
     setWinWorkspaceHint(0);
-    setWinLayerHint(WinLayerAboveDock);
+    setWinLayerHint((taskBarAutoHide || fIsCollapsed) ? WinLayerAboveDock : taskBarKeepBelow ? WinLayerBelow : WinLayerDock);
 
     {
         XWMHints wmh;
@@ -282,7 +280,7 @@ TaskBar::~TaskBar() {
     taskbuttonminimizedPixbuf = null;
     delete fGradient;
 #endif
-    icewmImage = null;
+    startImage = null;
     windowsImage = null;
     showDesktopImage = null;;
 #ifdef CONFIG_APPLET_MAILBOX
@@ -391,7 +389,8 @@ void TaskBar::initApplets() {
 #endif
 #ifdef CONFIG_APPLET_APM
     if (taskBarShowApm && (access(APMDEV, 0) == 0 ||
-                           access("/proc/acpi", 0) == 0))
+                           access("/proc/acpi", 0) == 0 ||
+	                   access("/proc/pmu", R_OK|X_OK) == 0))
     {
         fApm = new YApm(this);
     } else
@@ -447,7 +446,7 @@ void TaskBar::initApplets() {
     if (taskBarShowStartMenu) {
         fApplications = new ObjectButton(this, rootMenu);
         fApplications->setActionListener(this);
-        fApplications->setImage(icewmImage);
+        fApplications->setImage(startImage);
         fApplications->setToolTip(_("Favorite applications"));
     } else
         fApplications = 0;
@@ -536,6 +535,9 @@ void TaskBar::updateLayout(int &size_w, int &size_h) {
 /// TODO #warning "a hack"
         { fMailBoxStatus && fMailBoxStatus[0] ? fMailBoxStatus[1] : 0, false, 1, true, 1, 1, false },
         { fMailBoxStatus && fMailBoxStatus[0] && fMailBoxStatus[1] ? fMailBoxStatus[2] : 0, false, 1, true, 1, 1, false },
+        { fMailBoxStatus && fMailBoxStatus[0] && fMailBoxStatus[1] && fMailBoxStatus[2] ? fMailBoxStatus[3] : 0, false, 1, true, 1, 1, false },
+        { fMailBoxStatus && fMailBoxStatus[0] && fMailBoxStatus[1] && fMailBoxStatus[2] && fMailBoxStatus[3] ? fMailBoxStatus[4] : 0, false, 1, true, 1, 1, false },
+        { fMailBoxStatus && fMailBoxStatus[0] && fMailBoxStatus[1] && fMailBoxStatus[2] && fMailBoxStatus[3] && fMailBoxStatus[4] ? fMailBoxStatus[5] : 0, false, 1, true, 1, 1, false },
 #endif
 #ifdef CONFIG_APPLET_CPU_STATUS
         { fCPUStatus, false, 1, true, 2, 2, false },
@@ -600,7 +602,11 @@ void TaskBar::updateLayout(int &size_w, int &size_h) {
     right[0] = w;
     right[1] = w;
     if (taskBarShowWindows && fTasks != 0) {
+#ifdef LITE
+	h[0] = 16;
+#else
         h[0] = YIcon::smallSize() + 8;
+#endif
     }
 
     for (i = 0; wl = wlist + i, i < wcount; i++) {
@@ -893,9 +899,18 @@ void TaskBar::handleClick(const XButtonEvent &up, int count) {
     }
 }
 
+void TaskBar::handleEndDrag(const XButtonEvent &/*down*/, const XButtonEvent &/*up*/) {
+    xapp->releaseEvents();
+}
 void TaskBar::handleDrag(const XButtonEvent &/*down*/, const XMotionEvent &motion) {
 #ifndef NO_CONFIGURE
     int newPosition = 0;
+
+    xapp->grabEvents(this, YXApplication::movePointer.handle(),
+                         ButtonPressMask |
+                         ButtonReleaseMask |
+                         PointerMotionMask);
+
 
     if (motion.y_root < int(desktop->height() / 2))
         newPosition = 1;

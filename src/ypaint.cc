@@ -16,7 +16,6 @@
 #include "stdio.h"
 
 #include "intl.h"
-
 #ifdef CONFIG_XFREETYPE
 #include <X11/Xft/Xft.h>
 #endif
@@ -387,7 +386,12 @@ void Graphics::drawStringEllipsis(int x, int y, const char *str, int maxWidth) {
     if (fFont == null || w <= maxWidth) {
         drawChars(str, 0, len, x, y);
     } else {
-        int const maxW(maxWidth - fFont->textWidth("...", 3));
+        int maxW = 0;
+	if (!showEllipsis)
+            maxW = (maxWidth);
+        else
+            maxW = (maxWidth - fFont->textWidth("...", 3));
+
         int l(0), w(0);
         int sl(0), sw(0);
 
@@ -430,13 +434,15 @@ void Graphics::drawStringEllipsis(int x, int y, const char *str, int maxWidth) {
             }
         }
 
-        l-= sl;
-        w-= sw;
+        l -= sl;
+        w -= sw;
 
         if (l > 0)
             drawChars(str, 0, l, x, y);
-        if (l < len)
-            drawChars("...", 0, 3, x + w, y);
+        if (showEllipsis) {
+            if (l < len)
+                drawChars("...", 0, 3, x + w, y);
+        }
     }
 }
 
@@ -464,18 +470,24 @@ void Graphics::drawCharUnderline(int x, int y, const char *str, int charPos) {
 #ifdef CONFIG_I18N
         if (multiByte) {
             int nc = mblen(str + c, len - c);
-            if (nc < 1) // bad things
+            if (nc < 1) { // bad things
                 c++;
-            else
+                cp++;
+            } else {
                 c += nc;
+                cp += nc;
+            }
         } else
 #endif
+        {
             c++;
-        cp++;
+            cp++;
+        }
     }
     //    msg("%d %d %d %d %d", c, cp, charPos, left, right);
 
-    drawLine(x + left, y + 2, x + right, y + 2);
+    if (left < right)
+        drawLine(x + left, y + 2, x + right, y + 2);
 }
 
 void Graphics::drawStringMultiline(int x, int y, const char *str) {
@@ -588,6 +600,10 @@ void Graphics::fillArc(int x, int y, int width, int height, int a1, int a2) {
 void Graphics::setColor(YColor * aColor) {
     fColor = aColor;
     XSetForeground(fDisplay, gc, fColor->pixel());
+}
+
+void Graphics::setColorPixel(unsigned long pixel) {
+    XSetForeground(fDisplay, gc, pixel);
 }
 
 void Graphics::setFont(ref<YFont> aFont) {
