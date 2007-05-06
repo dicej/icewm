@@ -171,15 +171,15 @@ void TaskBarApp::paint(Graphics &g, const YRect &/*r*/) {
         g.fillRect(1, 1, width() - 2, height() - 2);
     } else {
         g.setColor(bg);
-        static YColor* active = new YColor(clrActiveBorder);
-        static YColor* inactive = new YColor(clrInactiveBorder);
+        //static YColor* active = new YColor(clrActiveBorder);
+        //static YColor* inactive = new YColor(clrInactiveBorder);
     
         if (style == 2) {
             p = 2;
             if (wmLook == lookMetal) {
-	      //g.drawBorderM(0, 0, width() - 1, height() - 1, false);
-	        p = 1;
-	        g.drawBorderS(0, 0, width() - 1, height() - 1, active);
+	        g.drawBorderM(0, 0, width() - 1, height() - 1, false);
+	        //p = 1;
+	        //g.drawBorderS(0, 0, width() - 1, height() - 1, active);
             } else if (wmLook == lookGtk) {
                 g.drawBorderG(0, 0, width() - 1, height() - 1, false);
             }
@@ -188,10 +188,10 @@ void TaskBarApp::paint(Graphics &g, const YRect &/*r*/) {
         } else {
             p = 1;
             if (wmLook == lookMetal) {
-	      //p = 2;
-              //g.drawBorderM(0, 0, width() - 1, height() - 1, true);
-	        p = 1;
-	        g.drawBorderS(0, 0, width() - 1, height() - 1, inactive);
+	        p = 2;
+                g.drawBorderM(0, 0, width() - 1, height() - 1, true);
+	      //p = 1;
+	      //g.drawBorderS(0, 0, width() - 1, height() - 1, inactive);
             } else if (wmLook == lookGtk) {
                 g.drawBorderG(0, 0, width() - 1, height() - 1, true);
             }
