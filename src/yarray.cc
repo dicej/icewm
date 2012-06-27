@@ -116,7 +116,11 @@ YBaseArray(sizeof(char *)) {
         append(other.getString(i));
 }
 
-const YStringArray::SizeType YStringArray::find(const char *str) {
+static bool strequal(const char *a, const char *b) {
+    return a ? b && !strcmp(a, b) : !b;
+}
+
+YStringArray::SizeType YStringArray::find(const char *str) {
     for (SizeType i = 0; i < getCount(); ++i)
         if (strequal(getString(i), str)) return i;
 
@@ -129,7 +133,7 @@ void YStringArray::remove(const SizeType index) {
 }
 
 void YStringArray::clear() {
-    for (unsigned i = 0; i < getCount(); ++i) delete[] getString(i);
+    for (int i = 0; i < getCount(); ++i) delete[] getString(i);
     YBaseArray::clear();
 }
 

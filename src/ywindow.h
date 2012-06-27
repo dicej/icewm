@@ -3,6 +3,7 @@
 
 #include "ypaint.h"
 #include "ycursor.h"
+#include "yarray.h"
 
 class YPopupWindow;
 class YToolTip;
@@ -21,6 +22,14 @@ extern "C" {
 #else
 #define INIT_GRADIENT(Member, Value)
 #endif
+
+struct DesktopScreenInfo {
+    int screen_number;
+    int x_org;
+    int y_org;
+    int width;
+    int height;
+};
 
 class YWindow {
 public:
@@ -48,7 +57,7 @@ public:
     void setGeometry(const YRect &r);
     void setSize(int width, int height);
     void setPosition(int x, int y);
-    virtual void configure(const YRect &r, const bool resized);
+    virtual void configure(const YRect &r);
 
     virtual void paint(Graphics &g, const YRect &r);
     virtual void paintFocus(Graphics &, const YRect &) {}
@@ -64,7 +73,7 @@ public:
     virtual void handleCrossing(const XCrossingEvent &crossing);
     virtual void handleProperty(const XPropertyEvent &) {}
     virtual void handleColormap(const XColormapEvent &) {}
-    virtual void handleFocus(const XFocusChangeEvent &) {}
+    virtual void handleFocus(const XFocusChangeEvent &);
     virtual void handleClientMessage(const XClientMessageEvent &message);
     virtual void handleSelectionClear(const XSelectionClearEvent &clear);
     virtual void handleSelectionRequest(const XSelectionRequestEvent &request);
@@ -74,7 +83,7 @@ public:
     virtual void handleCreateWindow(const XCreateWindowEvent &createWindow);
 #endif
     void handleMapNotify(const XMapEvent &map);
-    void handleUnmapNotify(const XUnmapEvent &unmap);
+    virtual void handleUnmapNotify(const XUnmapEvent &unmap);
     virtual void handleUnmap(const XUnmapEvent &unmap);
     virtual void handleDestroyWindow(const XDestroyWindowEvent &destroyWindow);
     virtual void handleReparentNotify(const XReparentEvent &) {}
@@ -123,7 +132,7 @@ public:
     Graphics & getGraphics();
 
 #ifdef CONFIG_GRADIENTS
-    virtual ref<YPixbuf> getGradient() const {
+    virtual ref<YImage> getGradient() const {
         return (parent() ? parent()->getGradient() : null); }
 #endif    
 
@@ -136,6 +145,7 @@ public:
     bool created() const { return (flags & wfCreated); }
     bool adopted() const { return (flags & wfAdopted); }
     bool destroyed() const { return (flags & wfDestroyed); }
+    bool focused() const { return (flags & wfFocused); }
 
     virtual void donePopup(YPopupWindow * /*command*/);
 
@@ -156,7 +166,7 @@ public:
     void nextFocus();
     void prevFocus();
     bool changeFocus(bool next);
-    void requestFocus();
+    void requestFocus(bool requestUserFocus);
     void setFocus(YWindow *window);
     YWindow *getFocusWindow();
     virtual void gotFocus();
@@ -170,7 +180,7 @@ public:
     void installAccelerator(unsigned key, unsigned mod, YWindow *win);
     void removeAccelerator(unsigned key, unsigned mod, YWindow *win);
 
-    void setToolTip(const char *tip);
+    void setToolTip(const ustring &tip);
 
     void mapToGlobal(int &x, int &y);
     void mapToLocal(int &x, int &y);
@@ -208,7 +218,8 @@ private:
         wfCreated   = 1 << 1,
         wfAdopted   = 1 << 2,
         wfDestroyed = 1 << 3,
-        wfNullSize  = 1 << 5
+        wfNullSize  = 1 << 5,
+        wfFocused   = 1 << 6
     } WindowFlags;
 
     void create();
@@ -280,18 +291,17 @@ public:
     
     virtual void resetColormapFocus(bool active);
 
-    void updateXineramaInfo();
+    void updateXineramaInfo(int &w, int &h);
 
     void getScreenGeometry(int *x, int *y,
                            int *width, int *height,
                            int screen_no = -1);
     int getScreenForRect(int x, int y, int width, int height);
 
-#ifdef XINERAMA
+    virtual void grabKeys() {}
+
 protected:
-    int xiHeads;
-    XineramaScreenInfo *xiInfo;
-#endif
+    YArray<DesktopScreenInfo> xiInfo;
 };
 
 extern YDesktop *desktop;
@@ -303,6 +313,7 @@ extern int shapeEventBase, shapeErrorBase;
 
 #ifdef CONFIG_XRANDR
 extern int xrandrSupported;
+extern bool xrandr12;
 extern int xrandrEventBase, xrandrErrorBase;
 #endif
 
@@ -315,6 +326,7 @@ extern Atom _XA_WM_CHANGE_STATE;
 extern Atom _XATOM_MWM_HINTS;
 extern Atom _XA_WM_COLORMAP_WINDOWS;
 extern Atom _XA_CLIPBOARD;
+extern Atom _XA_XEMBED_INFO;
 
 /* Xdnd */
 extern Atom XA_XdndAware;

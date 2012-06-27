@@ -18,6 +18,7 @@
 
 #include "config.h"
 #include "base.h"
+#include "ref.h"
 
 /*******************************************************************************
  * A dynamic array for anonymous data
@@ -25,7 +26,7 @@
 
 class YBaseArray {
 public:
-    typedef unsigned long SizeType;
+    typedef int SizeType;
     typedef unsigned char StorageType;
 
     explicit YBaseArray(SizeType elementSize):
@@ -38,8 +39,8 @@ public:
     virtual void remove(const SizeType index);
     virtual void clear();
 
-    const SizeType getCapacity() const { return fCapacity; }
-    const SizeType getCount() const { return fCount; }
+    SizeType getCapacity() const { return fCapacity; }
+    SizeType getCount() const { return fCount; }
     bool isEmpty() const { return 0 == getCount(); }
 
     void setCapacity(SizeType nCapacity);
@@ -59,7 +60,7 @@ protected:
 
     void release();
 public:
-    const SizeType getIndex(void const * ptr) const {
+    SizeType getIndex(void const * ptr) const {
         PRECONDITION(ptr >= getBegin() && ptr < getEnd());
         return (ptr >= getBegin() && ptr < getEnd()
                 ? ((StorageType *) ptr - fElements) / fElementSize : npos);
@@ -129,13 +130,14 @@ public:
     DataType &operator*() { 
         return getItem(0);
     }
-    
-    virtual const SizeType find(const DataType &item) {
+#if 0
+    virtual SizeType find(const DataType &item) {
         for (SizeType i = 0; i < getCount(); ++i)
             if (getItem(i) == item) return i;
 
         return npos;
     }
+#endif
 };
 
 /*******************************************************************************
@@ -155,16 +157,53 @@ public:
     }
     
     virtual void clear() {
-        for (unsigned i = 0; i < YArray<DataType *>::getCount(); ++i)
+        for (typename YArray<DataType *>::SizeType i = 0; i < YArray<DataType *>::getCount(); ++i)
             delete YArray<DataType *>::getItem(i);
         YArray<DataType *>::clear();
     }
 };
 
+template <class DataType>
+class YRefArray: public YBaseArray {
+public:
+    YRefArray(): YBaseArray(sizeof(ref<DataType>)) {}
+
+    void append(ref<DataType> &item) {
+        ref<DataType> r = item;
+        r.__ref();
+        YBaseArray::append(&r);
+    }
+    void insert(const SizeType index, ref<DataType> &item) {
+        ref<DataType> r = item;
+        r.__ref();
+        YBaseArray::insert(index, &r);
+    }
+
+    ref<DataType> getItem(const SizeType index) const {
+        ref<DataType> r = *(ref<DataType> *)YBaseArray::getItem(index);
+        return r;
+    }
+    ref<DataType> operator[](const SizeType index) const {
+        return getItem(index);
+    }
+
+    virtual void remove(const typename YArray<ref<DataType> *>::SizeType index) {
+        if (index < getCount())
+            ((ref<DataType> *)YBaseArray::getItem(index))->__unref();
+        YBaseArray::remove(index);
+    }
+    
+    virtual void clear() {
+        for (typename YArray<ref<DataType> *>::SizeType i = 0; i < getCount(); ++i)
+            ((ref<DataType> *)YBaseArray::getItem(i))->__unref();
+        YBaseArray::clear();
+    }
+};
 /*******************************************************************************
  * An array of strings
  ******************************************************************************/
 
+#if 1
 class YStringArray: public YBaseArray {
 public:
     YStringArray(YStringArray &other): YBaseArray((YBaseArray&)other) {}
@@ -201,11 +240,12 @@ public:
     virtual void remove(const SizeType index);
     virtual void clear();
 
-    virtual const SizeType find(const char *str);
+    virtual SizeType find(const char *str);
     
     char *const *getCArray() const;
     char **release();
 };
+#endif
 
 /*******************************************************************************
  * A stack emulated by a dynamic array

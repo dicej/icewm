@@ -41,6 +41,7 @@ Atom _XA_SM_CLIENT_ID;
 Atom _XA_ICEWM_ACTION;
 Atom _XA_CLIPBOARD;
 Atom _XA_TARGETS;
+Atom _XA_XEMBED_INFO;
 
 Atom _XA_WIN_PROTOCOLS;
 Atom _XA_WIN_WORKSPACE;
@@ -90,6 +91,7 @@ Atom _XA_NET_WM_WINDOW_TYPE_DESKTOP;
 Atom _XA_NET_WM_WINDOW_TYPE_SPLASH;
 
 Atom _XA_NET_WM_NAME;
+Atom _XA_NET_WM_ICON;
 Atom _XA_NET_WM_PID;
 
 Atom _XA_NET_WM_USER_TIME;
@@ -122,17 +124,17 @@ ref<YPixmap> menusepPixmap;
 ref<YPixmap> menuselPixmap;
 
 #ifdef CONFIG_GRADIENTS
-ref<YPixbuf> buttonIPixbuf;
-ref<YPixbuf> buttonAPixbuf;
+ref<YImage> buttonIPixbuf;
+ref<YImage> buttonAPixbuf;
 
-ref<YPixbuf> logoutPixbuf;
-ref<YPixbuf> switchbackPixbuf;
-ref<YPixbuf> listbackPixbuf;
-ref<YPixbuf> dialogbackPixbuf;
+ref<YImage> logoutPixbuf;
+ref<YImage> switchbackPixbuf;
+ref<YImage> listbackPixbuf;
+ref<YImage> dialogbackPixbuf;
 
-ref<YPixbuf> menubackPixbuf;
-ref<YPixbuf> menuselPixbuf;
-ref<YPixbuf> menusepPixbuf;
+ref<YImage> menubackPixbuf;
+ref<YImage> menuselPixbuf;
+ref<YImage> menusepPixbuf;
 #endif
 
 //changed robc
@@ -152,14 +154,13 @@ int shapeEventBase, shapeErrorBase;
 
 #ifdef CONFIG_XRANDR
 int xrandrSupported;
+bool xrandr12 = false;
 int xrandrEventBase, xrandrErrorBase;
 #endif
 
 #ifdef DEBUG
 int xeventcount = 0;
 #endif
-
-
 
 class YClipboard: public YWindow {
 public:
@@ -174,7 +175,7 @@ public:
         fLen = 0;
     }
 
-    void setData(char *data, int len) {
+    void setData(const char *data, int len) {
         if (fData)
             delete [] fData;
         fLen = len;
@@ -309,11 +310,13 @@ static void initAtoms() {
         { &_XA_NET_WM_WINDOW_TYPE_SPLASH, "_NET_WM_WINDOW_TYPE_SPLASH" },
 
         { &_XA_NET_WM_NAME, "_NET_WM_NAME" },
+        { &_XA_NET_WM_ICON, "_NET_WM_ICON" },
         { &_XA_NET_WM_PID, "_NET_WM_PID" },
         { &_XA_NET_WM_USER_TIME, "_NET_WM_USER_TIME" },
         { &_XA_NET_WM_STATE_DEMANDS_ATTENTION, "_NET_WM_STATE_DEMANDS_ATTENTION" },
 
         { &_XA_CLIPBOARD, "CLIPBOARD" },
+        { &_XA_XEMBED_INFO, "_XEMBED_INFO" },
         { &_XA_TARGETS, "TARGETS" },
         { &XA_XdndAware, "XdndAware" },
         { &XA_XdndEnter, "XdndEnter" },
@@ -358,7 +361,7 @@ void YXApplication::initModifiers() {
     XModifierKeymap *xmk = XGetModifierMapping(xapp->display());
     AltMask = MetaMask = WinMask = SuperMask = HyperMask =
         NumLockMask = ScrollLockMask = ModeSwitchMask = 0;
-
+    
     if (xmk) {
         KeyCode *c = xmk->modifiermap;
 
@@ -469,6 +472,15 @@ void YXApplication::initModifiers() {
 void YXApplication::dispatchEvent(YWindow *win, XEvent &xev) {
     if (xev.type == KeyPress || xev.type == KeyRelease) {
         YWindow *w = win;
+
+        if (!(fGrabWindow != 0 && !fGrabTree)) {
+            if (w->toplevel())
+                w = w->toplevel();
+
+            if (w->getFocusWindow() != 0)
+                w = w->getFocusWindow();
+        }
+
         while (w && (w->handleKey(xev.xkey) == false)) {
             if (fGrabTree && w == fXGrabWindow)
                 break;
@@ -478,7 +490,7 @@ void YXApplication::dispatchEvent(YWindow *win, XEvent &xev) {
         Window child;
 
         if (xev.type == MotionNotify) {
-            if (xev.xmotion.window != win->handle())
+            if (xev.xmotion.window != win->handle()) {
                 if (XTranslateCoordinates(xapp->display(),
                                           xev.xany.window, win->handle(),
                                           xev.xmotion.x, xev.xmotion.y,
@@ -486,10 +498,11 @@ void YXApplication::dispatchEvent(YWindow *win, XEvent &xev) {
                     xev.xmotion.window = win->handle();
                 else
                     return ;
+            }
         } else if (xev.type == ButtonPress || xev.type == ButtonRelease ||
                    xev.type == EnterNotify || xev.type == LeaveNotify)
         {
-            if (xev.xbutton.window != win->handle())
+            if (xev.xbutton.window != win->handle()) {
                 if (XTranslateCoordinates(xapp->display(),
                                           xev.xany.window, win->handle(),
                                           xev.xbutton.x, xev.xbutton.y,
@@ -497,8 +510,9 @@ void YXApplication::dispatchEvent(YWindow *win, XEvent &xev) {
                     xev.xbutton.window = win->handle();
                 else
                     return ;
+            }
         } else if (xev.type == KeyPress || xev.type == KeyRelease) {
-            if (xev.xkey.window != win->handle())
+            if (xev.xkey.window != win->handle()) {
                 if (XTranslateCoordinates(xapp->display(),
                                           xev.xany.window, win->handle(),
                                           xev.xkey.x, xev.xkey.y,
@@ -506,6 +520,7 @@ void YXApplication::dispatchEvent(YWindow *win, XEvent &xev) {
                     xev.xkey.window = win->handle();
                 else
                     return ;
+            }
         }
         win->handleEvent(xev);
     }
@@ -523,20 +538,24 @@ void YXApplication::handleGrabEvent(YWindow *winx, XEvent &xev) {
             if (XFindContext(display(),
                          xev.xbutton.subwindow,
                          windowContext,
-                         &(win.xptr)) != 0);
+                             &(win.xptr)) != 0)
+            {
                 if (xev.type == EnterNotify || xev.type == LeaveNotify)
                     win.ptr = 0;
                 else
                     win.ptr = fGrabWindow;
+            }
         } else {
             if (XFindContext(display(),
-                         xev.xbutton.window,
-                         windowContext,
-                         &(win.xptr)) != 0)
+                             xev.xbutton.window,
+                             windowContext,
+                             &(win.xptr)) != 0)
+            {
                 if (xev.type == EnterNotify || xev.type == LeaveNotify)
                     win.ptr = 0;
                 else
                     win.ptr = fGrabWindow;
+            }
         }
         if (win.ptr == 0)
             return ;
@@ -651,12 +670,14 @@ void YXApplication::afterWindowEvent(XEvent & /*xev*/) {
 }
 
 bool YXApplication::filterEvent(const XEvent &xev) {
-    if (xev.type == KeymapNotify) {
-        XMappingEvent xmapping = xev.xmapping; /// X headers const missing?
+    if (xev.type == MappingNotify) {
+        msg("MappingNotify");
+        XMappingEvent xmapping = xev.xmapping;
         XRefreshKeyboardMapping(&xmapping);
 
-        // !!! we should probably regrab everything ?
         initModifiers();
+
+        desktop->grabKeys();
         return true;
     }
     return false;
@@ -737,12 +758,13 @@ void YXApplication::alert() {
     XBell(display(), 100);
 }
 
-void YXApplication::setClipboardText(char *data, int len) {
+void YXApplication::setClipboardText(const ustring &data) {
     if (fClip == 0)
         fClip = new YClipboard();
     if (!fClip)
         return ;
-    fClip->setData(data, len);
+    cstring s(data);
+    fClip->setData(s.c_str(), s.c_str_len());
 }
 
 YXApplication::YXApplication(int *argc, char ***argv, const char *displayName):
@@ -786,10 +808,13 @@ YXApplication::YXApplication(int *argc, char ***argv, const char *displayName):
     if (runSynchronized)
         XSynchronize(display(), True);
 
+    xfd.registerPoll(this, ConnectionNumber(display()));
+
     windowContext = XUniqueContext();
 
     new YDesktop(0, RootWindow(display(), DefaultScreen(display())));
-    YPixbuf::init();
+    extern void image_init();
+    image_init();
 
     initAtoms();
     initModifiers();
@@ -802,22 +827,29 @@ YXApplication::YXApplication(int *argc, char ***argv, const char *displayName):
 #endif
 #ifdef CONFIG_XRANDR
     xrandrSupported = XRRQueryExtension(display(),
-                                           &xrandrEventBase, &xrandrErrorBase);
+                                        &xrandrEventBase, &xrandrErrorBase);
+    {
+        int major = 0;
+        int minor = 0;
+        XRRQueryVersion(display(), &major, &minor);
+            
+        MSG(("XRRVersion: %d %d", major, minor)); 
+        if (major > 1 || (major == 1 && minor >= 2)) {
+            xrandrSupported = 1;
+            xrandr12 = true;
+        }
+    }
 #endif
 }
 
 YXApplication::~YXApplication() {
+    xfd.unregisterPoll();
     XCloseDisplay(display());
     fDisplay = 0;
     xapp = 0;
 }
 
-/// TODO #warning "fixme"
-extern struct timeval idletime;
-
 bool YXApplication::handleXEvents() {
-    static struct timeval prevtime, curtime, difftime, maxtime = { 0, 0 };
-
     if (XPending(display()) > 0) {
         XEvent xev;
 
@@ -827,13 +859,11 @@ bool YXApplication::handleXEvents() {
 #endif
         //msg("%d", xev.type);
 
-        gettimeofday(&prevtime, 0);
         saveEventTime(xev);
 
 #ifdef DEBUG
         DBG logEvent(xev);
 #endif
-
         if (filterEvent(xev)) {
             ;
         } else {
@@ -863,36 +893,16 @@ bool YXApplication::handleXEvents() {
                 }
             }
         }
-        gettimeofday(&curtime, 0);
-        difftime.tv_sec = curtime.tv_sec - idletime.tv_sec;
-        difftime.tv_usec = curtime.tv_usec - idletime.tv_usec;
-        if (idletime.tv_usec < 0) {
-            idletime.tv_sec--;
-            idletime.tv_usec += 1000000;
-        }
-        if (idletime.tv_sec != 0 || idletime.tv_usec > 100000) {
-            handleIdle();
-            gettimeofday(&curtime, 0);
-            memcpy(&idletime, &curtime, sizeof(idletime));
-        }
-
-        difftime.tv_sec = curtime.tv_sec - prevtime.tv_sec;
-        difftime.tv_usec = curtime.tv_usec - prevtime.tv_usec;
-        if (difftime.tv_usec < 0) {
-            difftime.tv_sec--;
-            difftime.tv_usec += 1000000;
-        }
-        if (difftime.tv_sec > maxtime.tv_sec ||
-            (difftime.tv_sec == maxtime.tv_sec && difftime.tv_usec > maxtime.tv_usec))
-        {
-            MSG(("max_latency: %d.%06d", difftime.tv_sec, difftime.tv_usec));
-            maxtime = difftime;
-        }
+        XFlush(display());
         return true;
     }
     return false;
 }
 
+bool YXApplication::handleIdle() {
+    return handleXEvents();
+}
+ 
 void YXApplication::handleWindowEvent(Window xwindow, XEvent &xev) {
     int rc = 0;
     union {
@@ -905,32 +915,53 @@ void YXApplication::handleWindowEvent(Window xwindow, XEvent &xev) {
                            windowContext,
                            &(window.xptr))) == 0)
     {
-         window.ptr->handleEvent(xev);
+        if ((xev.type == KeyPress || xev.type == KeyRelease)
+            && window.ptr->toplevel() != 0) 
+        {
+            YWindow *w = window.ptr;
+
+            w = w->toplevel();
+
+            if (w->getFocusWindow() != 0)
+                w = w->getFocusWindow();
+
+            dispatchEvent(w, xev);
+        } else {
+            window.ptr->handleEvent(xev);
+        }
     } else {
         if (xev.type == MapRequest) {
-	// !!! java seems to do this ugliness
-		//YFrameWindow *f = getFrame(xev.xany.window);
-		msg("APP BUG? mapRequest for window %lX sent to destroyed frame %lX!",
-		    xev.xmaprequest.parent,
-		    xev.xmaprequest.window);
-		desktop->handleEvent(xev);
-	    } else if (xev.type == ConfigureRequest) {
-		msg("APP BUG? configureRequest for window %lX sent to destroyed frame %lX!",
-		    xev.xmaprequest.parent,
-		    xev.xmaprequest.window);
-		desktop->handleEvent(xev);
-	    } else if (xev.type != DestroyNotify) {
-		MSG(("unknown window 0x%lX event=%d", xev.xany.window, xev.type));
-	    }
+            // !!! java seems to do this ugliness
+            //YFrameWindow *f = getFrame(xev.xany.window);
+            msg("APP BUG? mapRequest for window %lX sent to destroyed frame %lX!",
+                xev.xmaprequest.parent,
+                xev.xmaprequest.window);
+            desktop->handleEvent(xev);
+        } else if (xev.type == ConfigureRequest) {
+            msg("APP BUG? configureRequest for window %lX sent to destroyed frame %lX!",
+                xev.xmaprequest.parent,
+                xev.xmaprequest.window);
+            desktop->handleEvent(xev);
+        } else if (xev.type != DestroyNotify) {
+            MSG(("unknown window 0x%lX event=%d", xev.xany.window, xev.type));
+        }
     }
     if (xev.type == KeyPress || xev.type == KeyRelease) ///!!!
         afterWindowEvent(xev);
 }
 
-int YXApplication::readFDCheckX() {
-    return ConnectionNumber(display());
+void YXApplication::flushXEvents() {
+    XSync(display(), False);
 }
 
-void YXApplication::flushXEvents() {
-    XSync(xapp->display(), False);
+void YXPoll::notifyRead() {
+    owner()->handleXEvents();
 }
+
+void YXPoll::notifyWrite() { }
+
+bool YXPoll::forRead() {
+    return true;
+}
+
+bool YXPoll::forWrite() { return false; }

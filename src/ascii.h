@@ -3,23 +3,43 @@
 
 class ASCII {
 public:
-    static bool isLower(unsigned char c) {
+    static bool isLower(char c) {
         return c >= 'a' && c <= 'z';
     }
 
-    static bool isUpper(unsigned char c) {
+    static bool isUpper(char c) {
         return c >= 'A' && c <= 'Z';
     }
 
-    static unsigned char toUpper(unsigned char c) {
-        return isLower(c) ? c - ' ' : c;
+    static char toUpper(char c) {
+        return isLower(c) ? (char)(c - ' ') : c;
     }
 
-    static unsigned char toLower(unsigned char c) {
-        return isUpper(c) ? c + ' ' : c;
+    static char toLower(char c) {
+        return isUpper(c) ? (char)(c + ' ') : c;
     }
 
-    static bool isSpaceOrTab(unsigned char c) {
+    static bool isSpaceOrTab(char c) {
+        return c == ' ' || c == '\t';
+    }
+
+    static bool isLower(int c) {
+        return c >= 'a' && c <= 'z';
+    }
+
+    static bool isUpper(int c) {
+        return c >= 'A' && c <= 'Z';
+    }
+
+    static int toUpper(int c) {
+        return isLower(c) ? (char)(c - ' ') : c;
+    }
+
+    static int toLower(int c) {
+        return isUpper(c) ? (char)(c + ' ') : c;
+    }
+
+    static bool isSpaceOrTab(int c) {
         return c == ' ' || c == '\t';
     }
 };

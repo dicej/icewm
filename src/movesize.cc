@@ -18,6 +18,9 @@
 
 #include "intl.h"
 
+#include "wmtaskbar.h"
+#include "aworkspaces.h"
+
 #include <stdio.h>
 
 void YFrameWindow::snapTo(int &wx, int &wy,
@@ -203,7 +206,7 @@ void YFrameWindow::drawMoveSizeFX(int x, int y, int w, int h, bool) {
 }
 
 int YFrameWindow::handleMoveKeys(const XKeyEvent &key, int &newX, int &newY) {
-    KeySym k = XKeycodeToKeysym(xapp->display(), key.keycode, 0);
+    KeySym k = XKeycodeToKeysym(xapp->display(), (KeyCode)key.keycode, 0);
     int m = KEY_MODMASK(key.state);
     int factor = 1;
 
@@ -251,7 +254,7 @@ int YFrameWindow::handleResizeKeys(const XKeyEvent &key,
                                    int &newX, int &newY, int &newWidth, int &newHeight,
                                    int incX, int incY)
 {
-    KeySym k = XKeycodeToKeysym(xapp->display(), key.keycode, 0);
+    KeySym k = XKeycodeToKeysym(xapp->display(), (KeyCode)key.keycode, 0);
     int m = KEY_MODMASK(key.state);
     int factor = 1;
 
@@ -263,7 +266,8 @@ int YFrameWindow::handleResizeKeys(const XKeyEvent &key,
     if (k == XK_Left || k == XK_KP_Left) {
         if (grabX == 0) {
             grabX = -1;
-        } else if (grabX == 1) {
+        }
+        if (grabX == 1) {
             newWidth -= incX * factor;
         } else if (grabX == -1) {
             newWidth += incX * factor;
@@ -272,7 +276,8 @@ int YFrameWindow::handleResizeKeys(const XKeyEvent &key,
     } else if (k == XK_Right || k == XK_KP_Right) {
         if (grabX == 0) {
             grabX = 1;
-        } else if (grabX == 1) {
+        }
+        if (grabX == 1) {
             newWidth += incX * factor;
         } else if (grabX == -1) {
             newWidth -= incX * factor;
@@ -281,7 +286,8 @@ int YFrameWindow::handleResizeKeys(const XKeyEvent &key,
     } else if (k == XK_Up || k == XK_KP_Up) {
         if (grabY == 0) {
             grabY = -1;
-        } else if (grabY == 1) {
+        }
+        if (grabY == 1) {
             newHeight -= incY * factor;
         } else if (grabY == -1) {
             newHeight += incY * factor;
@@ -290,7 +296,8 @@ int YFrameWindow::handleResizeKeys(const XKeyEvent &key,
     } else if (k == XK_Down || k == XK_KP_Down) {
         if (grabY == 0) {
             grabY = 1;
-        } else if (grabY == 1) {
+        }
+        if (grabY == 1) {
             newHeight += incY * factor;
         } else if (grabY == -1) {
             newHeight -= incY * factor;
@@ -313,7 +320,7 @@ void YFrameWindow::handleMoveMouse(const XMotionEvent &motion, int &newX, int &n
     int mouseX = motion.x_root;
     int mouseY = motion.y_root;
 
-    constrainMouseToWorkspace(mouseX, mouseY);
+    //constrainMouseToWorkspace(mouseX, mouseY);
 
     newX = mouseX - buttonDownX;
     newY = mouseY - buttonDownY;
@@ -330,26 +337,30 @@ void YFrameWindow::handleMoveMouse(const XMotionEvent &motion, int &newX, int &n
 
     if (!(motion.state & ShiftMask)) {
         if (/*EdgeResistance >= 0 && %%% */ EdgeResistance < 10000) {
-            if (newX + int(width() + n * borderX()) > Mx)
+            if (newX + int(width() + n * borderX()) > Mx) {
                 if (newX + int(width() + n * borderX()) < int(Mx + EdgeResistance))
                     newX = Mx - width() - n * borderX();
                 else if (motion.state & ShiftMask)
                     newX -= EdgeResistance;
-            if (newY + int(height() + n * borderY()) > My)
+            }
+            if (newY + int(height() + n * borderY()) > My) {
                 if (newY + int(height() + n * borderY()) < int(My + EdgeResistance))
                     newY = My - height() - n * borderY();
                 else if (motion.state & ShiftMask)
                     newY -= EdgeResistance;
-            if (newX < mx)
+            }
+            if (newX < mx) {
                 if (newX > int(- EdgeResistance + mx))
                     newX = mx;
                 else if (motion.state & ShiftMask)
                     newX += EdgeResistance;
-            if (newY < my)
+            }
+            if (newY < my) {
                 if (newY > int(- EdgeResistance + my))
                     newY = my;
                 else if (motion.state & ShiftMask)
                     newY += EdgeResistance;
+            }
         }
         if (EdgeResistance == 10000 || isMaximizedHoriz()) {
             if (newX + int(width() + n * borderX()) > Mx)
@@ -374,7 +385,7 @@ void YFrameWindow::handleResizeMouse(const XMotionEvent &motion,
     int mouseX = motion.x_root;
     int mouseY = motion.y_root;
 
-    constrainMouseToWorkspace(mouseX, mouseY);
+//    constrainMouseToWorkspace(mouseX, mouseY);
 
     if (grabX == -1) {
         newX = mouseX - buttonDownX;
@@ -738,7 +749,7 @@ bool YFrameWindow::handleKey(const XKeyEvent &key) {
                 break;
             }
         } else if (xapp->AltMask != 0) {
-            KeySym k = XKeycodeToKeysym(xapp->display(), key.keycode, 0);
+            KeySym k = XKeycodeToKeysym(xapp->display(), (KeyCode)key.keycode, 0);
             unsigned int m = KEY_MODMASK(key.state);
             unsigned int vm = VMod(m);
 
@@ -959,10 +970,11 @@ void YFrameWindow::startMoveSize(int doMove, int byMouse,
     }
 
     XSync(xapp->display(), False);
-    if (!xapp->grabEvents(this, grabPointer,
-                         ButtonPressMask |
-                         ButtonReleaseMask |
-                         PointerMotionMask))
+    if (!xapp->grabEvents(this,
+                          grabPointer,
+                          ButtonPressMask |
+                          ButtonReleaseMask |
+                          PointerMotionMask))
     {
         return ;
     }
@@ -1001,6 +1013,12 @@ void YFrameWindow::endMoveSize() {
     sizingWindow = 0;
 
     manager->setWorkAreaMoveWindows(false);
+
+#ifdef CONFIG_TASKBAR
+    if (taskBar && taskBar->workspacesPane()) {
+        taskBar->workspacesPane()->repaint();
+    }
+#endif
 }
 
 void YFrameWindow::handleBeginDrag(const XButtonEvent &down, const XMotionEvent &motion) {

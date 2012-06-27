@@ -13,6 +13,7 @@ XIV(bool, multiByte,                            true)
 #endif
 XIV(bool, modSuperIsCtrlAlt,                    true)
 XIV(bool, doubleBuffer,                         true)
+XIV(bool, xrrDisable,                           false)
 XIV(int, xineramaPrimaryScreen,                 0)
 XIV(int, MenuActivateDelay,                     40)
 XIV(int, SubmenuActivateDelay,                  300)
@@ -29,17 +30,13 @@ XIV(int, ToolTipTime,                           0)
 ///#warning "move this one back to WM"
 XIV(bool, grabRootWindow,                       true)
 
-#ifdef CONFIG_IMLIB
-XIV(bool, disableImlibCaches,                   true)
-#endif
 #ifdef CONFIG_XFREETYPE
 XIV(bool, haveXft,                              true)
 #endif
 XSV(const char *, iconPath,                     0)
-XSV(const char *, libDir,                       LIBDIR)
-XSV(const char *, configDir,                    CFGDIR)
 #define CONFIG_DEFAULT_THEME "icedesert/default.theme"
 XSV(const char *, themeName,                    CONFIG_DEFAULT_THEME)
+XSV(const char *, xineramaPrimaryScreenName,    0)
 
 #define CONFIG_DEFAULT_LOOK lookNice
 

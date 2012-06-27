@@ -118,7 +118,7 @@ void DesktopBackgroundManager::addImage(const char *imageFileName) {
 
 ref<YPixmap> DesktopBackgroundManager::loadImage(const char *imageFileName) {
     if (access(imageFileName, 0) == 0) {
-        ref<YPixmap> r(new YPixmap(imageFileName));
+        ref<YPixmap> r = YPixmap::load(imageFileName);
         return r;
     } else
         return null;
@@ -157,25 +157,24 @@ long DesktopBackgroundManager::getWorkspace() {
 
 #if 1
 // should be a separate program to reduce memory waste
-static ref<YPixmap> renderBackground(YResourcePaths const & paths,
+static ref<YPixmap> renderBackground(ref<YResourcePaths> paths,
                                      char const * filename, YColor * color)
 {
     ref<YPixmap> back;
 
     if (*filename == '/') {
         if (access(filename, R_OK) == 0)
-            back.init(new YPixmap(filename));
+            back = YPixmap::load(filename);
     } else
-        back = paths.loadPixmap(0, filename);
+        back = paths->loadPixmap(0, filename);
 
 #ifndef NO_CONFIGURE
     if (back != null && (centerBackground || desktopBackgroundScaled)) {
-        ref<YPixmap> cBack(new YPixmap(desktop->width(), desktop->height()));
+        ref<YPixmap> cBack = YPixmap::create(desktop->width(), desktop->height());
         Graphics g(cBack, 0, 0);
 
         g.setColor(color);
         g.fillRect(0, 0, desktop->width(), desktop->height());
-#ifdef CONFIG_IMLIB
         if (desktopBackgroundScaled &&
 	    (desktop->width() != back->width() ||
 	     desktop->height() != back->height()))
@@ -183,28 +182,28 @@ static ref<YPixmap> renderBackground(YResourcePaths const & paths,
             int aw = back->width();
             int ah = back->height();
             if (aw < desktop->width()) {
-                ah = (long long)desktop->width() * ah / aw;
+                ah = (int)((long long)desktop->width() * ah / aw);
                 aw = desktop->width();
                 if (ah * 11 / 10 > desktop->height()) {
-                    aw = (long long)desktop->height() * aw / ah;
+                    aw = (int)((long long)desktop->height() * aw / ah);
                     ah = desktop->height();
                 }
             } else {
-                aw = (long long)desktop->height() * aw / ah;
+                aw = (int)((long long)desktop->height() * aw / ah);
                 ah = desktop->height();
                 if (aw * 11 / 10 > desktop->width()) {
-                    ah = (long long)desktop->width() * ah / aw;
+                    ah = (int)((long long)desktop->width() * ah / aw);
                     aw = desktop->width();
                 }
             }
-            ref<YPixmap> scaled(new YPixmap(back->pixmap(), back->mask(), back->width(), back->height(), aw, ah));
+            ref<YPixmap> scaled =
+		back->scale(aw, ah);
             if (scaled != null) {
                 g.drawPixmap(scaled, (desktop->width() -  scaled->width()) / 2,
                              (desktop->height() - scaled->height()) / 2);
                 scaled = null;
             }
         } else
-#endif
         {
             g.drawPixmap(back, (desktop->width() -  back->width()) / 2,
                          (desktop->height() - back->height()) / 2);
@@ -252,7 +251,7 @@ void DesktopBackgroundManager::changeBackground(long /*workspace*/) {
 
 #endif
 #if 1
-    YResourcePaths paths("", true);
+    ref<YResourcePaths> paths = YResourcePaths::subdirs(null, true);
     YColor * bColor((DesktopBackgroundColor && DesktopBackgroundColor[0])
                     ? new YColor(DesktopBackgroundColor)
                     : 0);
@@ -457,18 +456,16 @@ int main(int argc, char **argv) {
             OK0()
         };
 
-        app->loadConfig(theme_prefs, "preferences");
-        app->loadConfig(theme_prefs, "theme");
+        YConfig::findLoadConfigFile(theme_prefs, "preferences");
+        YConfig::findLoadConfigFile(theme_prefs, "theme");
     }
-    YApplication::loadConfig(icewmbg_prefs, "preferences");
+    YConfig::findLoadConfigFile(icewmbg_prefs, "preferences");
     if (themeName != 0) {
         MSG(("themeName=%s", themeName));
 
-        char *theme = strJoin("themes/", themeName, NULL);
-        YApplication::loadConfig(icewmbg_prefs, theme);
-        delete [] theme;
+        YConfig::findLoadConfigFile(icewmbg_prefs, upath("themes").child(themeName));
     }
-    YApplication::loadConfig(icewmbg_prefs, "prefoverride");
+    YConfig::findLoadConfigFile(icewmbg_prefs, "prefoverride");
 #endif
 
 #if 0

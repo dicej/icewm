@@ -22,8 +22,8 @@ public:
 
     virtual int getOffset();
 
-    virtual const char *getText();
-    virtual YIcon *getIcon();
+    virtual ustring getText();
+    virtual ref<YIcon> getIcon();
 private:
     bool fSelected; // !!! remove this from here
     YListItem *fPrevItem, *fNextItem;
@@ -38,7 +38,7 @@ public:
     int addAfter(YListItem *prev, YListItem *item);
     void removeItem(YListItem *item);
 
-    virtual void configure(const YRect &r, const bool resized);
+    virtual void configure(const YRect &r);
     virtual bool handleKey(const XKeyEvent &key);
     virtual void handleButton(const XButtonEvent &button);
     virtual void handleClick(const XButtonEvent &up, int count);
@@ -112,14 +112,14 @@ private:
     void ensureVisibility(int item);
     
 #ifdef CONFIG_GRADIENTS
-    ref<YPixbuf> fGradient;
+    ref<YImage> fGradient;
 #endif
 };
 
 extern ref<YPixmap> listbackPixmap;
 
 #ifdef CONFIG_GRADIENTS
-extern ref<YPixbuf> listbackPixbuf;
+extern ref<YImage> listbackPixbuf;
 #endif
 
 #endif

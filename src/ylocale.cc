@@ -47,7 +47,7 @@ YLocale::YLocale(char const * localeName) {
                "Falling back to 'C' locale'."));
         fLocaleName = setlocale(LC_ALL, "C");
     }
-/// TODO #warning "should always use multibyte/fontset if I18N"
+#warning "P1 should always use multibyte/fontset if I18N"
     multiByte = (MB_CUR_MAX > 1);
 
     char const * codeset = NULL;
@@ -57,7 +57,7 @@ YLocale::YLocale(char const * localeName) {
          i < sizeof(codesetItems)/sizeof(int) - 1
          && NULL != (codeset = nl_langinfo(codesetItems[i]))
          && '\0' == *codeset;
-         ++i);
+         ++i) {}
 
     if (NULL == codeset || '\0' == *codeset) {
         warn(_("Failed to determinate the current locale's codeset. "
@@ -87,7 +87,7 @@ YLocale::YLocale(char const * localeName) {
     };
 
     char const * localeCharsets[] = {
-        strJoin(codeset, "//TRANSLIT", NULL), codeset, NULL
+        cstrJoin(codeset, "//TRANSLIT", NULL), codeset, NULL
     };
 
     char const ** ucs(unicodeCharsets);
@@ -174,8 +174,8 @@ int YLocale::getRating(const char *localeStr) {
     const char *s1 = getLocaleName();
     const char *s2 = localeStr;
 
-    while (*s1 && *s1++ == *s2++);
-    if (*s1) while (--s2 > localeStr && !strchr("_@.", *s2));
+    while (*s1 && *s1++ == *s2++) {}
+    if (*s1) while (--s2 > localeStr && !strchr("_@.", *s2)) {}
 
     return s2 - localeStr;
 }

@@ -5,6 +5,7 @@
 #include "ysmapp.h"
 #include "sysdep.h"
 #include "base.h"
+#include "yconfig.h"
 
 #include "intl.h"
 
@@ -41,7 +42,7 @@ static void iceWatchFD(IceConn conn,
 {
     if (opening) {
         if (IceSMfd != -1) { // shouldn't happen
-            warn(_("TOO MANY ICE CONNECTIONS -- not supported"));
+            warn("TOO MANY ICE CONNECTIONS -- not supported");
         } else {
             IceSMfd = IceConnectionNumber(conn);
             fcntl(IceSMfd, F_SETFD, FD_CLOEXEC);
@@ -139,7 +140,7 @@ static void initSM() {
     if (getenv("SESSION_MANAGER") == 0)
         return;
     if (IceAddConnectionWatch(&iceWatchFD, NULL) == 0) {
-        warn(_("Session Manager: IceAddConnectionWatch failed."));
+        warn("Session Manager: IceAddConnectionWatch failed.");
         return ;
     }
 
@@ -167,7 +168,7 @@ static void initSM() {
                                     oldSessionId, &newSessionId,
                                     sizeof(error_str), error_str)) == NULL)
     {
-        warn(_("Session Manager: Init error: %s"), error_str);
+        warn("Session Manager: Init error: %s", error_str);
         return ;
     }
     IceSMconn = SmcGetIceConnection(SMconn);
@@ -233,6 +234,7 @@ YXApplication(argc, argv, displayName)
 
     sessionProg = (*argv)[0]; //ICEWMEXE;
     initSM();
+    psm.registerPoll(this, IceSMfd);
 }
 
 YSMApplication::~YSMApplication() {
@@ -240,14 +242,12 @@ YSMApplication::~YSMApplication() {
         SmcCloseConnection(SMconn, 0, NULL);
         SMconn = NULL;
         IceSMconn = NULL;
+        IceSMfd = -1;
+        unregisterPoll(&psm);
     }
 }
 
-int YSMApplication::readFdCheckSM() {
-    return IceSMfd;
-}
-
-void YSMApplication::readFdActionSM() {
+void YSMPoll::notifyRead() {
     Bool rep;
     if (IceProcessMessages(IceSMconn, NULL, &rep)
         == IceProcessMessagesIOError)
@@ -255,7 +255,19 @@ void YSMApplication::readFdActionSM() {
         SmcCloseConnection(SMconn, 0, NULL);
         IceSMconn = NULL;
         IceSMfd = -1;
+        unregisterPoll();
     }
+}
+
+void YSMPoll::notifyWrite() {
+}
+
+bool YSMPoll::forRead() {
+    return true;
+}
+
+bool YSMPoll::forWrite() {
+    return false;
 }
 
 #endif /* CONFIG_SESSION */

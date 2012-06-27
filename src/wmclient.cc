@@ -17,12 +17,12 @@
 extern XContext frameContext;
 extern XContext clientContext;
 
-YFrameClient::YFrameClient(YWindow *parent, YFrameWindow *frame, Window win): YWindow(parent, win) {
+YFrameClient::YFrameClient(YWindow *parent, YFrameWindow *frame, Window win): YWindow(parent, win), fWindowTitle(null), fIconTitle(null), fWMWindowRole(null), fWindowRole(null) {
     fFrame = frame;
     fBorder = 0;
     fProtocols = 0;
-    fWindowTitle = 0;
-    fIconTitle = 0;
+    fWindowTitle = null;
+    fIconTitle = null;
     fColormap = None;
     fShaped = false;
     fHints = 0;
@@ -32,8 +32,8 @@ YFrameClient::YFrameClient(YWindow *parent, YFrameWindow *frame, Window win): YW
     fClassHint = XAllocClassHint();
     fTransientFor = 0;
     fClientLeader = None;
-    fWindowRole = 0;
-    fWMWindowRole = 0;
+    fWindowRole = null;
+    fWMWindowRole = null;
 #ifndef NO_MWM_HINTS
     fMwmHints = 0;
 #endif
@@ -69,8 +69,6 @@ YFrameClient::YFrameClient(YWindow *parent, YFrameWindow *frame, Window win): YW
 
 YFrameClient::~YFrameClient() {
     XDeleteContext(xapp->display(), handle(), getFrame() ? frameContext : clientContext);
-    delete[] fWindowTitle; fWindowTitle = 0;
-    delete[] fIconTitle; fIconTitle = 0;
     if (fSizeHints) { XFree(fSizeHints); fSizeHints = 0; }
     if (fClassHint) {
         if (fClassHint->res_name) {
@@ -86,8 +84,8 @@ YFrameClient::~YFrameClient() {
     }
     if (fHints) { XFree(fHints); fHints = 0; }
     if (fMwmHints) { XFree(fMwmHints); fMwmHints = 0; }
-    if (fWMWindowRole) { XFree(fWMWindowRole); fWMWindowRole = 0; }
-    if (fWindowRole) { XFree(fWindowRole); fWindowRole = 0; }
+    fWMWindowRole = null;
+    fWindowRole = null;
 }
 
 void YFrameClient::getProtocols(bool force) {
@@ -182,28 +180,28 @@ void YFrameClient::getTransient() {
     if (!prop.wm_transient_for)
         return;
 
-    Window newTransientFor;
+    Window newTransientFor = 0;
 
     if (XGetTransientForHint(xapp->display(),
                              handle(),
                              &newTransientFor))
     {
-        if (newTransientFor == manager->handle() || /* bug in xfm */
-            newTransientFor == desktop->handle() ||
+        if (//newTransientFor == manager->handle() || /* bug in xfm */
+            //newTransientFor == desktop->handle() ||
             newTransientFor == handle()             /* bug in fdesign */
             /* !!! TODO: check for recursion */
            )
             newTransientFor = 0;
+    }
 
-        if (newTransientFor != fTransientFor) {
-            if (fTransientFor)
-                if (getFrame())
-                    getFrame()->removeAsTransient();
-            fTransientFor = newTransientFor;
-            if (fTransientFor)
-                if (getFrame())
-                    getFrame()->addAsTransient();
-        }
+    if (newTransientFor != fTransientFor) {
+        if (fTransientFor)
+            if (getFrame())
+                getFrame()->removeAsTransient();
+        fTransientFor = newTransientFor;
+        if (fTransientFor)
+            if (getFrame())
+                getFrame()->addAsTransient();
     }
 }
 
@@ -226,10 +224,12 @@ void YFrameClient::constrainSize(int &w, int &h, int flags)
             int const yMax(fSizeHints->max_aspect.y);
 
             MSG(("aspect"));
-            if (flags & csKeepX)
+            if (flags & csKeepX) {
                 MSG(("keepX"));
-            if (flags & csKeepY)
+            }
+            if (flags & csKeepY) {
                 MSG(("keepY"));
+            }
 
             // !!! fix handling of KeepX and KeepY together
             if (xMin * h > yMin * w) { // min aspect
@@ -489,6 +489,16 @@ void YFrameClient::handleProperty(const XPropertyEvent &property) {
                 getFrame()->updateNetWMStrut();
             prop.net_wm_strut = new_prop;
 #endif
+#ifdef WMSPEC_HINTS
+        } else if (property.atom == _XA_NET_WM_ICON) {
+            msg("change: net wm icon");
+            if (new_prop) prop.net_wm_icon = true;
+#ifndef LITE
+            if (getFrame())
+                getFrame()->updateIcon();
+#endif
+            prop.net_wm_icon = new_prop;
+#endif
 #ifdef GNOME1_HINTS
         } else if (property.atom == _XA_WIN_HINTS) {
             if (new_prop) prop.win_hints = true;
@@ -572,15 +582,15 @@ void YFrameClient::handleShapeNotify(const XShapeEvent &shape) {
 #endif
 
 void YFrameClient::setWindowTitle(const char *title) {
-    if (title == 0 || fWindowTitle == 0 || strcmp(title, fWindowTitle) != 0) {
-        delete[] fWindowTitle; fWindowTitle = newstr(title);
+    if (title == 0 || fWindowTitle == null || !fWindowTitle.equals(title)) {
+        fWindowTitle = ustring::newstr(title);
         if (getFrame()) getFrame()->updateTitle();
     }
 }
 
 void YFrameClient::setIconTitle(const char *title) {
-    if (title == 0 || fIconTitle == 0 || strcmp(title, fIconTitle) != 0) {
-        delete[] fIconTitle; fIconTitle = newstr(title);
+    if (title == 0 || fIconTitle == null || !fIconTitle.equals(title)) {
+        fIconTitle = ustring::newstr(title);
         if (getFrame()) getFrame()->updateIconTitle();
     }
 }
@@ -864,6 +874,15 @@ void YFrameClient::setMwmHints(const MwmHints &mwm) {
         *fMwmHints = mwm;
 }
 
+void YFrameClient::saveSizeHints()
+{
+    memcpy(&savedSizeHints, fSizeHints, sizeof(XSizeHints));
+};
+void YFrameClient::restoreSizeHints() {
+    memcpy(fSizeHints, &savedSizeHints, sizeof(XSizeHints));
+};
+
+
 long YFrameClient::mwmFunctions() {
     long functions = ~0U;
 
@@ -1006,6 +1025,96 @@ bool YFrameClient::getWinIcons(Atom *type, int *count, long **elem) {
     return false;
 }
 #endif
+
+static void *GetFullWindowProperty(Display *display, Window handle, Atom propAtom, int &itemCount, int itemSize1)
+{
+    void *data = NULL;
+    itemCount = 0;
+    int itemSize = itemSize1;
+    if (itemSize1 == 32)
+        itemSize = sizeof(long) * 8;
+
+    {
+        Atom r_type;
+        int r_format;
+        unsigned long nitems;
+        unsigned long bytes_remain;
+        unsigned char *prop;
+
+        while (XGetWindowProperty(display, handle,
+                               propAtom, (itemCount * itemSize) / 32, 1024*32, False, AnyPropertyType,
+                               &r_type, &r_format, &nitems, &bytes_remain,
+                               &prop) == Success && prop && bytes_remain == 0)
+        {
+            if (r_format == itemSize1 && nitems > 0) {
+                data = realloc(data, (itemCount + nitems) * itemSize / 8);
+
+                // access to memory beyound 256MiB causes crashes! But anyhow, size
+                // >>2MiB looks suspicious. Detect this case ASAP. However, if
+                // the usable icon is somewhere in the beginning, it's okay to
+                // return truncated data.
+                if (itemCount * itemSize / 8 >= 2097152) {
+                     XFree(prop);
+                     break;
+                }
+
+                memcpy((char *)data + itemCount * itemSize / 8, prop, nitems * itemSize / 8);
+                itemCount += nitems;
+                XFree(prop);
+                if (bytes_remain == 0)
+                    break;
+                continue;
+            }
+            XFree(prop);
+            free(data);
+            itemCount = 0;
+            return NULL;
+        }
+    }
+    return data;
+}
+
+bool YFrameClient::getNetWMIcon(int *count, long **elem) {
+    *count = 0;
+    *elem = 0;
+
+    MSG(("get_net_wm_icon 1"));
+    //if (!prop.net_wm_icon)
+//        return false;
+
+    *elem = (long *)GetFullWindowProperty(xapp->display(), handle(),
+                                          _XA_NET_WM_ICON, *count, 32);
+
+    if (elem && count && *count>0)
+        return true;
+
+#if 0
+    msg("get_net_wm_icon 2");
+    Atom r_type;
+    int r_format;
+    unsigned long nitems;
+    unsigned long bytes_remain;
+    unsigned char *prop;
+
+    if (XGetWindowProperty(xapp->display(), handle(),
+                           _XA_NET_WM_ICON, 0, 1024*256, False, AnyPropertyType,
+                           &r_type, &r_format, &nitems, &bytes_remain,
+                           &prop) == Success && prop)
+    {
+        msg("get_net_wm_icon 3");
+        if (r_format == 32 && nitems > 0 && bytes_remain == 0) {
+
+            msg("get_net_wm_icon 4, %ld %ld", (long)_XA_NET_WM_ICON, (long)r_type);
+
+            *count = nitems;
+            *elem = (long *)prop;
+            return true;
+        }
+        XFree(prop);
+    }
+#endif
+    return false;
+}
 
 #if defined(GNOME1_HINTS) || defined(WMSPEC_HINTS)
 void YFrameClient::setWinWorkspaceHint(long wk) {
@@ -1428,10 +1537,10 @@ void YFrameClient::getWMWindowRole() {
     fWMWindowRole = role.ptr;
 }
 
-char *YFrameClient::getClientId(Window leader) { /// !!! fix
+ustring YFrameClient::getClientId(Window leader) { /// !!! fix
 
     if (!prop.sm_client_id)
-        return 0;
+        return null;
 
     union {
         char *ptr;
@@ -1617,6 +1726,7 @@ void YFrameClient::getPropertiesList() {
             else if (a == _XA_WIN_LAYER) HAS(prop.win_layer);
             else if (a == _XA_WIN_ICONS) HAS(prop.win_icons);
 #endif
+            else if (a == _XA_XEMBED_INFO) HAS(prop.xembed_info);
 #ifdef DEBUG
             else {
                 MSG(("unknown atom: %s", XGetAtomName(xapp->display(), a)));
@@ -1627,15 +1737,13 @@ void YFrameClient::getPropertiesList() {
     }
 }
 
-void YFrameClient::configure(const YRect &r, const bool resized) {
+void YFrameClient::configure(const YRect &r) {
     (void)r;
-    (void)resized;
-    MSG(("client geometry %d:%d-%dx%d %d",
+    MSG(("client geometry %d:%d-%dx%d",
          r.x(),
          r.y(),
          r.width(),
-         r.height(),
-         resized ? true : false));
+         r.height()));
 }
 
 bool YFrameClient::getWmUserTime(long *userTime) {
@@ -1652,7 +1760,7 @@ bool YFrameClient::getWmUserTime(long *userTime) {
 
     if (XGetWindowProperty(xapp->display(),
                            handle(),
-                           _XA_NET_WM_STRUT,
+                           _XA_NET_WM_USER_TIME,
                            0, 4, False, XA_CARDINAL,
                            &r_type, &r_format,
                            &count, &bytes_remain, &prop) == Success && prop)

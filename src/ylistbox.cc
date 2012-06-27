@@ -59,12 +59,12 @@ void YListItem::setSelected(bool aSelected) {
     fSelected = aSelected;
 }
 
-const char *YListItem::getText() {
-    return 0;
+ustring YListItem::getText() {
+    return null;
 }
 
-YIcon *YListItem::getIcon() {
-    return 0;
+ref<YIcon> YListItem::getIcon() {
+    return null;
 }
 
 int YListItem::getOffset() {
@@ -192,8 +192,8 @@ void YListBox::updateItems() {
 
                 int cw = 3 + 20 + a->getOffset();
                 if (listBoxFont != null) {
-                    const char *t = a->getText();
-                    if (t)
+                    ustring t = a->getText();
+                    if (t != null)
                         cw += listBoxFont->textWidth(t) + 3;
                 }
                 if (cw > fMaxWidth)
@@ -283,29 +283,26 @@ void YListBox::focusVisible() {
     }
 }
 
-void YListBox::configure(const YRect &r, const bool resized) {
-    YWindow::configure(r, resized);
-    //if (fFocusedItem != -1)
-    //    paintItem(fFocusedItem);
-    if (resized) {
-        resetScrollBars();
+void YListBox::configure(const YRect &r) {
+    YWindow::configure(r);
+
+    resetScrollBars();
 
 #ifdef CONFIG_GRADIENTS
-        if (listbackPixbuf != null
-            && !(fGradient != null &&
-                 fGradient->width() == r.width() &&
-                 fGradient->height() == r.height()))
-        {
-            fGradient = YPixbuf::scale(listbackPixbuf, r.width(), r.height());
-            repaint();
-        }
-#endif
+    if (listbackPixbuf != null
+        && !(fGradient != null &&
+             fGradient->width() == r.width() &&
+             fGradient->height() == r.height()))
+    {
+        fGradient = listbackPixbuf->scale(r.width(), r.height());
+        repaint();
     }
+#endif
 }
 
 bool YListBox::handleKey(const XKeyEvent &key) {
     if (key.type == KeyPress) {
-        KeySym k = XKeycodeToKeysym(xapp->display(), key.keycode, 0);
+        KeySym k = XKeycodeToKeysym(xapp->display(), (KeyCode)key.keycode, 0);
         int m = KEY_MODMASK(key.state);
 
         bool clear = (m & ControlMask) ? false : true;
@@ -395,17 +392,16 @@ bool YListBox::handleKey(const XKeyEvent &key) {
             }
         default:
             if (k < 256) {
-                unsigned char c = ASCII::toUpper(k);
+                unsigned char c = ASCII::toUpper((char)k);
                 int count = getItemCount();
                 int i = fFocusedItem;
                 YListItem *it = 0;
-                const char *title;
 
                 for (int n = 0; n < count; n++) {
                     i = (i + 1) % count;
                     it = getItem(i);
-                    title = it->getText();
-                    if (title && ASCII::toUpper(title[0]) == c) {
+                    ustring title = it->getText();
+                    if (title != null && title.length() > 0 && ASCII::toUpper(title.charAt(0)) == c) {
                         setFocusedItem(i, clear, extend, false);
                         break;
                     }
@@ -576,7 +572,7 @@ void YListBox::paintItem(Graphics &g, int n) {
     } else {
 #ifdef CONFIG_GRADIENTS
         if (fGradient != null)
-            g.copyPixbuf(*fGradient, 0, y - fOffsetY, width(), lh,
+            g.drawImage(fGradient, 0, y - fOffsetY, width(), lh,
                          0, y - fOffsetY);
         else 
 #endif
@@ -593,26 +589,26 @@ void YListBox::paintItem(Graphics &g, int n) {
         g.setPenStyle(true);
         int cw = 3 + 20 + a->getOffset();
         if (listBoxFont != null) {
-            const char *t = a->getText();
-            if (t)
+            ustring t = a->getText();
+            if (t != null)
                 cw += listBoxFont->textWidth(t) + 3;
         }
         g.drawRect(0 - fOffsetX, y - fOffsetY, cw - 1, lh - 1);
         g.setPenStyle(false);
     }
 
-    YIcon *icon = a->getIcon();
+    ref<YIcon> icon = a->getIcon();
 
-    if (icon && icon->small() != null)
-        g.drawImage(icon->small(), xpos + x - fOffsetX, y - fOffsetY + 1);
+    if (icon != null)
+        icon->draw(g, xpos + x - fOffsetX, y - fOffsetY + 1, YIcon::smallSize());
 
-    const char *title = a->getText();
+    ustring title = a->getText();
 
-    if (title) {
+    if (title != null) {
         g.setColor(s ? listBoxSelFg : listBoxFg);
         g.setFont(listBoxFont);
 
-        g.drawChars(title, 0, strlen(title),
+        g.drawChars(title,
                     xpos + x + 20 - fOffsetX, yPos - fOffsetY);
     }
 }
@@ -631,7 +627,7 @@ void YListBox::paint(Graphics &g, const YRect &r) {
     if (y < height()) {
 #ifdef CONFIG_GRADIENTS
         if (fGradient != null)
-            g.copyPixbuf(*fGradient, 0, y, width(), height() - y, 0, y);
+            g.drawImage(fGradient, 0, y, width(), height() - y, 0, y);
         else 
 #endif
             if (listbackPixmap != null)
@@ -835,11 +831,12 @@ bool YListBox::isSelected(YListItem *item) { // !!! remove this !!!
     if (fDragging) {
         int beg = (fSelectStart < fSelectEnd) ? fSelectStart : fSelectEnd;
         int end = (fSelectStart < fSelectEnd) ? fSelectEnd : fSelectStart;
-        if (n >= beg && n <= end)
+        if (n >= beg && n <= end) {
             if (fSelect)
                 s = true;
             else
                 s = false;
+        }
     }
     return s;
 }

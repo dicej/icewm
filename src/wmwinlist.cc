@@ -52,7 +52,7 @@ int WindowListItem::getOffset() {
     return ofs;
 }
 
-const char *WindowListItem::getText() {
+ustring WindowListItem::getText() {
     if (fFrame)
         return getFrame()->getTitle();
     else
@@ -62,11 +62,11 @@ const char *WindowListItem::getText() {
             return workspaceNames[fWorkspace];
 }
 
-YIcon *WindowListItem::getIcon() {
+ref<YIcon> WindowListItem::getIcon() {
     if (fFrame)
         return getFrame()->getIcon();
     else
-        return 0;
+        return null;
 }
 
 
@@ -131,7 +131,7 @@ void WindowListBox::actionPerformed(YAction *action, unsigned int modifiers) {
             }
         }
     } else {
-        for (unsigned int i = 0; i < frameList.getCount(); i++) {
+        for (int i = 0; i < frameList.getCount(); i++) {
 #ifndef CONFIG_PDA
             if (action == actionHide)
                 if (frameList[i]->isHidden())
@@ -147,7 +147,7 @@ void WindowListBox::actionPerformed(YAction *action, unsigned int modifiers) {
 
 bool WindowListBox::handleKey(const XKeyEvent &key) {
     if (key.type == KeyPress) {
-        KeySym k = XKeycodeToKeysym(xapp->display(), key.keycode, 0);
+        KeySym k = XKeycodeToKeysym(xapp->display(), (KeyCode)key.keycode, 0);
         int m = KEY_MODMASK(key.state);
 
         switch (k) {
@@ -290,7 +290,7 @@ YFrameClient(aParent, 0) {
 
     closeSubmenu->addItem(_("_Close"), -2, _("Del"), actionClose);
     closeSubmenu->addSeparator();
-    closeSubmenu->addItem(_("_Kill Client"), -2, 0, actionKill);
+    closeSubmenu->addItem(_("_Kill Client"), -2, null, actionKill);
 #if 0
     closeSubmenu->addItem(_("_Terminate Process"), -2, 0, actionTermProcess)->setEnabled(false);
     closeSubmenu->addItem(_("Kill _Process"), -2, 0, actionKillProcess)->setEnabled(false);
@@ -298,11 +298,11 @@ YFrameClient(aParent, 0) {
 
     windowListPopup = new YMenu();
     windowListPopup->setActionListener(list);
-    windowListPopup->addItem(_("_Show"), -2, 0, actionShow);
+    windowListPopup->addItem(_("_Show"), -2, null, actionShow);
 #ifndef CONFIG_PDA
-    windowListPopup->addItem(_("_Hide"), -2, 0, actionHide);
+    windowListPopup->addItem(_("_Hide"), -2, null, actionHide);
 #endif
-    windowListPopup->addItem(_("_Minimize"), -2, 0, actionMinimize);
+    windowListPopup->addItem(_("_Minimize"), -2, null, actionMinimize);
     windowListPopup->addSubmenu(_("Move _To"), -2, moveMenu);
     windowListPopup->addSeparator();
     windowListPopup->addItem(_("Tile _Vertically"), -2, KEY_NAME(gKeySysTileVertical), actionTileVertical);
@@ -399,9 +399,9 @@ void WindowList::updateWindowListApp(WindowListItem *item) {
     }
 }
 
-void WindowList::configure(const YRect &r, const bool resized) {
-    YFrameClient::configure(r, resized);
-    if (resized) scroll->setGeometry(YRect(0, 0, r.width(), r.height()));
+void WindowList::configure(const YRect &r) {
+    YFrameClient::configure(r);
+    scroll->setGeometry(YRect(0, 0, r.width(), r.height()));
 }
 
 void WindowList::handleClose() {

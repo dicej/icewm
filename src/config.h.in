@@ -3,9 +3,6 @@
 /* Address bar */
 #undef CONFIG_ADDRESSBAR
 
-/* Define to enable antialiasing. */
-#undef CONFIG_ANTIALIASING
-
 /* APM status applet */
 #undef CONFIG_APPLET_APM
 
@@ -24,11 +21,11 @@
 /* Define to enable X11 core conts. */
 #undef CONFIG_COREFONTS
 
+/* Define to use gdk_pixbuf_xlib for image rendering */
+#undef CONFIG_GDK_PIXBUF_XLIB
+
 /* Define to make IceWM more GNOME-friendly */
 #undef CONFIG_GNOME_MENUS
-
-/* Name of a root window property indicating that GNOME is active. */
-#undef CONFIG_GNOME_ROOT_PROPERTY
 
 /* Define to enable gradient support. */
 #undef CONFIG_GRADIENTS
@@ -38,9 +35,6 @@
 
 /* Define to enable internationalization */
 #undef CONFIG_I18N
-
-/* Define to use Imlib for image rendering */
-#undef CONFIG_IMLIB
 
 /* Define when using libiconv */
 #undef CONFIG_LIBICONV
@@ -80,9 +74,6 @@
 
 /* Define to enable XFreeType support. */
 #undef CONFIG_XFREETYPE
-
-/* Define to use libXpm for image rendering */
-#undef CONFIG_XPM
 
 /* Define to enable XRANDR extension */
 #undef CONFIG_XRANDR
@@ -165,6 +156,12 @@
 
 /* Define to 1 if you have the <linux/threads.h> header file. */
 #undef HAVE_LINUX_THREADS_H
+
+/* Define to 1 if you have the <machine/apmvar.h> header file. */
+#undef HAVE_MACHINE_APMVAR_H
+
+/* Define to 1 if you have the <machine/apm_bios.h> header file. */
+#undef HAVE_MACHINE_APM_BIOS_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -300,6 +297,9 @@
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
@@ -315,16 +315,16 @@
 /* Define to the type of arg 5 for `select'. */
 #undef SELECT_TYPE_ARG5
 
-/* The size of a `char', as computed by sizeof. */
+/* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
 
-/* The size of a `int', as computed by sizeof. */
+/* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
-/* The size of a `long', as computed by sizeof. */
+/* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of a `short', as computed by sizeof. */
+/* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
 
 /* Define to 1 if you have the ANSI C header files. */
@@ -345,5 +345,5 @@
 /* Define to 1 if the X Window System is missing or not being used. */
 #undef X_DISPLAY_MISSING
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t

@@ -115,6 +115,7 @@ unsigned int ignore_enternotify_hack = 0; // credits to ahwm
 
 static void update_ignore_enternotify_hack(const XEvent &event) {
     ignore_enternotify_hack = event.xany.serial;
+    MSG(("ignore: %10d", ignore_enternotify_hack));
     if (xapp && xapp->display())
         XSync(xapp->display(), False);
 }
@@ -128,7 +129,7 @@ YWindow::YWindow(YWindow *parent, Window win):
     fFocusedWindow(0),
 
     fHandle(win), flags(0), fStyle(0), fX(0), fY(0), fWidth(1), fHeight(1),
-    fPointer(), unmapCount(0), 
+    fPointer(), unmapCount(0),
     fGraphics(0),
     fEventMask(KeyPressMask|KeyReleaseMask|FocusChangeMask|
                LeaveWindowMask|EnterWindowMask),
@@ -294,7 +295,7 @@ void YWindow::create() {
             attributes.win_gravity = fWinGravity;
             attrmask |= CWWinGravity;
         }
-        
+
         attributes.event_mask = fEventMask;
         int zw = width();
         int zh = height();
@@ -497,7 +498,7 @@ void YWindow::handleEvent(const XEvent &event) {
         {
             for (YWindow *w = this; // !!! hack, fix
                  w && w->handleKey(event.xkey) == false;
-                 w = w->parent());
+                 w = w->parent()) {}
         }
         break;
 
@@ -557,11 +558,11 @@ void YWindow::handleEvent(const XEvent &event) {
         handleColormap(event.xcolormap);
         break;
 
-    case MapRequest: 
+    case MapRequest:
         handleMapRequest(event.xmaprequest);
         break;
 
-    case ReparentNotify: 
+    case ReparentNotify:
         handleReparentNotify(event.xreparent);
         break;
 
@@ -658,7 +659,7 @@ void YWindow::handleEvent(const XEvent &event) {
 
 ref<YPixmap> YWindow::beginPaint(YRect &r) {
     //    return new YPixmap(width(), height());
-    ref<YPixmap> pix(new YPixmap(r.width(), r.height()));
+    ref<YPixmap> pix = YPixmap::create(r.width(), r.height());
     return pix;
 }
 
@@ -713,12 +714,12 @@ void YWindow::paintExpose(int ex, int ey, int ew, int eh) {
         eh = height() - ey;
     }
 
-
     YRect r1(ex, ey, ew, eh);
     if (r1.width() > 0 && r1.height() > 0) {
         if (fDoubleBuffer) {
             ref<YPixmap> pixmap = beginPaint(r1);
             Graphics g1(pixmap, ex, ey);
+            //MSG(("paint %d %d %d %d", ex, ey, ew, eh));
             paint(g1, r1);
             endPaint(g, pixmap, r1);
         } else {
@@ -744,26 +745,24 @@ void YWindow::handleGraphicsExpose(const XGraphicsExposeEvent &graphicsExpose) {
 
 void YWindow::handleConfigure(const XConfigureEvent &configure) {
     if (configure.window == handle()) {
-        const bool resized(configure.width != fWidth ||
-                           configure.height != fHeight);
-        
         if (configure.x != fX ||
             configure.y != fY ||
-            resized)
+            configure.width != fWidth ||
+            configure.height != fHeight)
         {
             fX = configure.x;
             fY = configure.y;
             fWidth = configure.width;
             fHeight = configure.height;
 
-            this->configure(YRect(fX, fY, fWidth, fHeight), resized);
+            this->configure(YRect(fX, fY, fWidth, fHeight));
         }
-    }   
+    }
 }
 
 bool YWindow::handleKey(const XKeyEvent &key) {
     if (key.type == KeyPress) {
-        KeySym k = XKeycodeToKeysym(xapp->display(), key.keycode, 0);
+        KeySym k = XKeycodeToKeysym(xapp->display(), (KeyCode)key.keycode, 0);
         unsigned int m = KEY_MODMASK(key.state);
 
         if (accel) {
@@ -775,8 +774,8 @@ bool YWindow::handleKey(const XKeyEvent &key) {
                     if (a->win->handleKey(key) == true)
                         return true;
             }
-            if (ASCII::isLower(k)) {
-                k = ASCII::toUpper(k);
+            if (ASCII::isLower((char)k)) {
+                k = ASCII::toUpper((char)k);
                 for (a = accel; a; a = a->next)
                     if (m == a->mod && k == a->key)
                         if (a->win->handleKey(key) == true)
@@ -885,21 +884,21 @@ void YWindow::handleMotion(const XMotionEvent &motion) {
 }
 
 #ifndef CONFIG_TOOLTIP
-void YWindow::setToolTip(const char */*tip*/) {
+void YWindow::setToolTip(const ustring &/*tip*/) {
 #else
 YTimer *YWindow::fToolTipTimer = 0;
 
-void YWindow::setToolTip(const char *tip) {
+void YWindow::setToolTip(const ustring &tip) {
     if (fToolTip) {
-        if (!tip) {
+        if (tip == null) {
             delete fToolTip; fToolTip = 0;
         } else {
             fToolTip->setText(tip);
             fToolTip->repaint();
         }
     }
-    if (tip) {
-        if (!fToolTip)
+    if (tip != null) {
+        if (fToolTip == NULL)
             fToolTip = new YToolTip();
         if (fToolTip)
             fToolTip->setText(tip);
@@ -910,7 +909,7 @@ void YWindow::setToolTip(const char *tip) {
 bool YWindow::toolTipVisible() {
 #ifdef CONFIG_TOOLTIP
     return (fToolTip && fToolTip->visible());
-#else    
+#else
     return false;
 #endif
 }
@@ -950,6 +949,18 @@ void YWindow::handleClientMessage(const XClientMessageEvent &message) {
         && message.data.l[0] == (long)_XA_WM_DELETE_WINDOW)
     {
         handleClose();
+    } else if (message.message_type == _XA_WM_PROTOCOLS
+        && message.format == 32
+        && message.data.l[0] == (long)_XA_WM_TAKE_FOCUS)
+    {
+        gotFocus();
+#if 0
+        YWindow *w = getFocusWindow();
+        if (w)
+            w->gotFocus();
+        else
+            gotFocus();
+#endif
     } else if (message.message_type == XA_XdndEnter ||
                message.message_type == XA_XdndLeave ||
                message.message_type == XA_XdndPosition ||
@@ -971,7 +982,7 @@ void YWindow::handleMapNotify(const XMapEvent &) {
 }
 
 void YWindow::handleUnmapNotify(const XUnmapEvent &xunmap) {
-    if (xunmap.window == xunmap.event) {
+    if (xunmap.window == xunmap.event || xunmap.send_event) {
         if (!ignoreUnmap(xunmap.window)) {
             flags &= ~wfVisible;
             handleUnmap(xunmap);
@@ -1034,7 +1045,7 @@ void YWindow::setGeometry(const YRect &r) {
                                   fX, fY, fWidth, fHeight);
         }
 
-        configure(YRect(fX, fY, fWidth, fHeight), resized);
+        configure(YRect(fX, fY, fWidth, fHeight));
     }
 }
 
@@ -1046,7 +1057,7 @@ void YWindow::setPosition(int x, int y) {
         if (flags & wfCreated)
             XMoveWindow(xapp->display(), fHandle, fX, fY);
 
-        configure(YRect(fX, fY, width(), height()), false);
+        configure(YRect(fX, fY, width(), height()));
     }
 }
 
@@ -1059,7 +1070,7 @@ void YWindow::setSize(int width, int height) {
             if (!nullGeometry())
                 XResizeWindow(xapp->display(), fHandle, fWidth, fHeight);
 
-        configure(YRect(x(), y(), fWidth, fHeight), true);
+        configure(YRect(x(), y(), fWidth, fHeight));
     }
 }
 
@@ -1089,8 +1100,7 @@ void YWindow::mapToLocal(int &x, int &y) {
     y = dy;
 }
 
-void YWindow::configure(const YRect &/*r*/,
-                        const bool /*resized*/)
+void YWindow::configure(const YRect &/*r*/)
 {
 }
 
@@ -1115,7 +1125,7 @@ void YWindow::setGrabPointer(const YCursor& pointer) {
 
 void YWindow::grabKeyM(int keycode, unsigned int modifiers) {
     MSG(("grabKey %d %d %s", keycode, modifiers,
-         XKeysymToString(XKeycodeToKeysym(xapp->display(), keycode, 0))));
+         XKeysymToString(XKeycodeToKeysym(xapp->display(), (KeyCode)keycode, 0))));
 
     XGrabKey(xapp->display(), keycode, modifiers, handle(), False,
              GrabModeAsync, GrabModeAsync);
@@ -1173,29 +1183,46 @@ void YWindow::setEnabled(bool enable) {
     }
 }
 
+void YWindow::handleFocus(const XFocusChangeEvent &xfocus) {
+    if (isToplevel()) {
+        if (xfocus.type == FocusIn) {
+            gotFocus();
+        } else if (xfocus.type == FocusOut) {
+            lostFocus();
+        }
+    }
+}
+
 bool YWindow::isFocusTraversable() {
     return false;
 }
 
 bool YWindow::isFocused() {
-    if (parent() == 0 || isToplevel()) /// !!! fix
+    return (flags & wfFocused) != 0;
+#if 0
+    if (parent() == 0)
         return true;
+    else if (isToplevel())
+        return (flags & wfFocused) != 0;
     else
         return (parent()->fFocusedWindow == this) && parent()->isFocused();
+#endif
 }
 
-void YWindow::requestFocus() {
-    if (!toplevel())
-        return ;
+void YWindow::requestFocus(bool requestUserFocus) {
+//    if (!toplevel())
+//        return ;
 
-    if (parent()) {
-        if (!isToplevel())
-            parent()->requestFocus();
-        parent()->setFocus(this);
-        setFocus(0);///!!! is this the right place?
+//    setFocus(0);///!!! is this the right place?
+    if (isToplevel()) {
+        if (visible() && requestUserFocus)
+            setWindowFocus();
+    } else {
+        if (parent()) {
+            parent()->requestFocus(requestUserFocus);
+            parent()->setFocus(this);
+        }
     }
-    if (parent() && parent()->isFocused())
-        setWindowFocus();
 }
 
 
@@ -1290,7 +1317,7 @@ bool YWindow::changeFocus(bool next) {
         }
 
         if (cur->isFocusTraversable()) {
-            cur->requestFocus();
+            cur->requestFocus(false);
             return true;
         }
     } while (cur != org);
@@ -1304,26 +1331,37 @@ void YWindow::setFocus(YWindow *window) {
 
         fFocusedWindow = window;
 
-        if (oldFocus)
-            oldFocus->lostFocus();
-        if (fFocusedWindow)
-            fFocusedWindow->gotFocus();
+        if (focused()) {
+            if (oldFocus)
+                oldFocus->lostFocus();
+            if (fFocusedWindow)
+                fFocusedWindow->gotFocus();
+        }
     }
 }
 void YWindow::gotFocus() {
-    if (fFocusedWindow)
-        fFocusedWindow->gotFocus();
-    repaintFocus();
+    if (parent() == 0 || isToplevel() || parent()->focused()) {
+        if (!(flags & wfFocused)) {
+            flags |= wfFocused;
+            repaintFocus();
+            if (fFocusedWindow)
+                fFocusedWindow->gotFocus();
+        }
+    }
 }
 
 void YWindow::lostFocus() {
-    if (fFocusedWindow)
-        fFocusedWindow->lostFocus();
-    repaintFocus();
+    if (flags & wfFocused) {
+        if (fFocusedWindow)
+            fFocusedWindow->lostFocus();
+        flags &= ~wfFocused;
+        repaintFocus();
+    }
 }
 
 void YWindow::installAccelerator(unsigned int key, unsigned int mod, YWindow *win) {
-    key = ASCII::toUpper(key);
+    if (key < 128)
+        key = ASCII::toUpper((char)key);
     if (fToplevel || fParentWindow == 0) {
         YAccelerator **pa = &accel, *a;
 
@@ -1352,7 +1390,8 @@ void YWindow::installAccelerator(unsigned int key, unsigned int mod, YWindow *wi
 }
 
 void YWindow::removeAccelerator(unsigned int key, unsigned int mod, YWindow *win) {
-    key = ASCII::toUpper(key);
+    if (key < 128)
+        key = ASCII::toUpper((char)key);
     if (fToplevel || fParentWindow == 0) {
         YAccelerator **pa = &accel, *a;
 
@@ -1593,7 +1632,8 @@ YDesktop::YDesktop(YWindow *aParent, Window win):
 {
     desktop = this;
     setDoubleBuffer(false);
-    updateXineramaInfo();
+    int w, h;
+    updateXineramaInfo(w, h);
 }
 
 YDesktop::~YDesktop() {
@@ -1739,7 +1779,7 @@ bool YWindow::getCharFromEvent(const XKeyEvent &key, char *s, int maxLen) {
 #ifndef USE_XmbLookupString
     if ((klen == 0)  && (ksym < 0x1000)) {
         klen = 1;
-        keyBuf[0] = ksym & 0xFF;
+        keyBuf[0] = (char)(ksym & 0xFF);
     }
 #endif
     if (klen >= 1 && klen < maxLen - 1) {
@@ -1832,32 +1872,105 @@ void YWindow::scrollWindow(int dx, int dy) {
     }
 }
 
-void YDesktop::updateXineramaInfo() {
-#ifdef XINERAMA
-    xiHeads = 0;
-    xiInfo = NULL;
+void YDesktop::updateXineramaInfo(int &w, int &h) {
+    bool gotLayout = false;
+    xiInfo.clear();
 
-    if (XineramaIsActive(xapp->display())) {
-        xiInfo = XineramaQueryScreens(xapp->display(), &xiHeads);
-        msg("xinerama: heads=%d", xiHeads);
-        for (int i = 0; i < xiHeads; i++) {
-            msg("xinerama: %d +%d+%d %dx%d",
-                xiInfo[i].screen_number,
-                xiInfo[i].x_org,
-                xiInfo[i].y_org,
-                xiInfo[i].width,
-                xiInfo[i].height);
+#if CONFIG_XRANDR
+    MSG(("xrr: %d", xrandr12 ? 1 : 0));
+    if (xrandr12 && !xrrDisable) {
+        XRRScreenResources *xrrsr =
+            XRRGetScreenResources(xapp->display(), handle());
+
+        for (int i = 0; i < xrrsr->ncrtc; i++)
+        {
+            XRRCrtcInfo *ci = XRRGetCrtcInfo(xapp->display(), xrrsr, xrrsr->crtcs[i]);
+
+            MSG(("xrr %d (%d): %d %d %d %d", i, xrrsr->crtcs[i], ci->x, ci->y, ci->width, ci->height));
+
+            if (!gotLayout && ci->width > 0 && ci->height > 0) {
+                DesktopScreenInfo si;
+                si.screen_number = xrrsr->crtcs[i];
+                si.x_org = ci->x;
+                si.y_org = ci->y;
+                si.width = ci->width;
+                si.height = ci->height;
+                xiInfo.append(si);
+            }
         }
-    } else {
-        xiHeads = 1;
-        xiInfo = new XineramaScreenInfo[1];
-        xiInfo[0].screen_number = 0;
-        xiInfo[0].x_org = 0;
-        xiInfo[0].y_org = 0;
-        xiInfo[0].width = width();
-        xiInfo[0].height = height();
+
+        MSG(("xinerama primary screen name: %s", xineramaPrimaryScreenName));
+        for (int o = 0; o < xrrsr->noutput; o++) {
+            XRROutputInfo *oinfo = XRRGetOutputInfo(xapp->display(), xrrsr, xrrsr->outputs[o]);
+
+            MSG(("output: %s -> %d", oinfo->name, oinfo->crtc));
+
+            if (xineramaPrimaryScreenName != 0 && oinfo->name != NULL) {
+                if (strcmp(xineramaPrimaryScreenName, oinfo->name) == 0)
+                { 
+                    int s = oinfo->crtc;
+                    for (int sc = 0; sc < xiInfo.getCount(); sc++) {
+                         if (xiInfo[sc].screen_number == s) {
+                             xineramaPrimaryScreen = o;
+                             MSG(("xinerama primary screen: %s -> %d", oinfo->name, o));
+                         }
+                    }
+                }
+            }
+        }
     }
 #endif
+    if (xiInfo.getCount() < 2) { // use xinerama if no XRANDR screens (nvidia hack)
+       xiInfo.clear();
+#ifdef XINERAMA
+        if (XineramaIsActive(xapp->display())) {
+            int nxsi;
+            XineramaScreenInfo *xsi = XineramaQueryScreens(xapp->display(), &nxsi);
+
+            MSG(("xinerama: heads=%d", nxsi));
+            for (int i = 0; i < nxsi; i++) {
+                MSG(("xinerama: %d +%d+%d %dx%d",
+                    xsi[i].screen_number,
+                    xsi[i].x_org,
+                    xsi[i].y_org,
+                    xsi[i].width,
+                    xsi[i].height));
+
+                DesktopScreenInfo si;
+                si.screen_number = i;
+                si.x_org = xsi[i].x_org;
+                si.y_org = xsi[i].y_org;
+                si.width = xsi[i].width;
+                si.height = xsi[i].height;
+                xiInfo.append(si);
+            }
+            gotLayout = true;
+        }
+#endif
+    }
+    if (xiInfo.getCount() == 0) {
+        DesktopScreenInfo si;
+        si.screen_number = 0;
+        si.x_org = 0;
+        si.y_org = 0;
+        si.width = DisplayWidth(xapp->display(), DefaultScreen(xapp->display()));
+        si.height = DisplayHeight(xapp->display(), DefaultScreen(xapp->display()));
+        xiInfo.append(si);
+    }
+    {
+        w = xiInfo[0].x_org + xiInfo[0].width;
+        h = xiInfo[0].y_org + xiInfo[0].height;
+        for (int i = 0; i < xiInfo.getCount(); i++)
+        {
+            if (xiInfo[i].x_org + xiInfo[i].width > w)
+                w = xiInfo[i].width + xiInfo[i].x_org;
+            if (xiInfo[i].y_org + xiInfo[i].height > h)
+                h = xiInfo[i].height + xiInfo[i].y_org;
+            
+            MSG(("screen %d (%d): %d %d %d %d", i, xiInfo[i].screen_number, xiInfo[i].x_org, xiInfo[i].y_org, xiInfo[i].width, xiInfo[i].height));
+        }
+    }
+    MSG(("desktop screen area: %d %d", w, h));
 }
 
 
@@ -1865,15 +1978,14 @@ void YDesktop::getScreenGeometry(int *x, int *y,
                                  int *width, int *height,
                                  int screen_no)
 {
-#ifdef XINERAMA
     if (screen_no == -1)
         screen_no = xineramaPrimaryScreen;
-    if (screen_no < 0 || screen_no >= xiHeads)
+    if (screen_no < 0 || screen_no >= xiInfo.getCount())
         screen_no = 0;
-    if (screen_no >= xiHeads || xiInfo == NULL) {
+    if (screen_no >= xiInfo.getCount() || xiInfo.getCount() == 0) {
     } else {
-        for (int s = 0; s < xiHeads; s++) {
-            if (xiInfo[s].screen_number != screen_no)
+        for (int s = 0; s < xiInfo.getCount(); s++) {
+            if (s != screen_no)
                 continue;
             *x = xiInfo[s].x_org;
             *y = xiInfo[s].y_org;
@@ -1882,7 +1994,7 @@ void YDesktop::getScreenGeometry(int *x, int *y,
             return;
         }
     }
-#endif
+
     *x = 0;
     *y = 0;
     *width = desktop->width();
@@ -1893,20 +2005,19 @@ int YDesktop::getScreenForRect(int x, int y, int width, int height) {
     int screen = -1;
     long coverage = -1;
 
-#ifdef XINERAMA
-    if (xiInfo == NULL || xiHeads == 0)
+    if (xiInfo.getCount() == 0)
         return 0;
-    for (int s = 0; s < xiHeads; s++) {
+    for (int s = 0; s < xiInfo.getCount(); s++) {
         int x_i = intersection(x, x + width,
                                xiInfo[s].x_org, xiInfo[s].x_org + xiInfo[s].width);
-        MSG(("x_i %d %d %d %d %d", x_i, x, width, xiInfo[s].x_org, xiInfo[s].width));
+        //MSG(("x_i %d %d %d %d %d", x_i, x, width, xiInfo[s].x_org, xiInfo[s].width));
         int y_i = intersection(y, y + height,
                                xiInfo[s].y_org, xiInfo[s].y_org + xiInfo[s].height);
-        MSG(("y_i %d %d %d %d %d", y_i, y, height, xiInfo[s].y_org, xiInfo[s].height));
+        //MSG(("y_i %d %d %d %d %d", y_i, y, height, xiInfo[s].y_org, xiInfo[s].height));
 
         int cov = (1 + x_i) * (1 + y_i);
 
-        MSG(("cov=%d %d %d s:%d xc:%d yc:%d %d %d %d %d", cov, x, y, s, x_i, y_i, xiInfo[s].x_org, xiInfo[s].y_org, xiInfo[s].width, xiInfo[s].height));
+        //MSG(("cov=%d %d %d s:%d xc:%d yc:%d %d %d %d %d", cov, x, y, s, x_i, y_i, xiInfo[s].x_org, xiInfo[s].y_org, xiInfo[s].width, xiInfo[s].height));
 
         if (cov > coverage) {
             screen = s;
@@ -1914,7 +2025,4 @@ int YDesktop::getScreenForRect(int x, int y, int width, int height) {
         }
     }
     return screen;
-#else
-    return 0;
-#endif
 }

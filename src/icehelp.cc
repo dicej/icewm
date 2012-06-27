@@ -45,7 +45,7 @@ public:
     }
 
     int x, y;
-    short w, h, len; // int?
+    int w, h, len;
     const char *text;
     text_node *next;
 };
@@ -294,7 +294,7 @@ node *parse(FILE *fp, int flags, node *parent, node *&nextsub, node::node_type &
                 while (SPACE(c)) c = getc(fp);
                 do {
                     buf = (char *)realloc(buf, ++len);
-                    buf[len-1] = ASCII::toUpper(c);
+                    buf[len-1] = ASCII::toUpper((char)c);
                     c = getc(fp);
                 } while (c != EOF && !SPACE(c) && c != '>');
 
@@ -302,6 +302,10 @@ node *parse(FILE *fp, int flags, node *parent, node *&nextsub, node::node_type &
                 buf[len-1] = 0;
 
                 node::node_type type = get_type(buf);
+                if (buf != 0) {
+                    free(buf);
+                    buf = 0;
+                }
 
 #if 1
                 if (type == node::paragraph ||
@@ -325,7 +329,7 @@ node *parse(FILE *fp, int flags, node *parent, node *&nextsub, node::node_type &
                 while (SPACE(c)) c = getc(fp);
                 do {
                     buf = (char *)realloc(buf, ++len);
-                    buf[len-1] = ASCII::toUpper(c);
+                    buf[len-1] = ASCII::toUpper((char)c);
                     c = getc(fp);
                 } while (c != EOF && !SPACE(c) && c != '>');
 
@@ -334,6 +338,11 @@ node *parse(FILE *fp, int flags, node *parent, node *&nextsub, node::node_type &
 
                 node::node_type type = get_type(buf);
                 node *n = new node(type);
+
+                if (buf != 0) {
+                    free(buf);
+                    buf = 0;
+                }
 
                 if (n == 0)
                     break;
@@ -350,7 +359,7 @@ node *parse(FILE *fp, int flags, node *parent, node *&nextsub, node::node_type &
 
                     do {
                         abuf = (char *)realloc(abuf, ++alen + 1);
-                        abuf[alen-1] = ASCII::toUpper(c);
+                        abuf[alen-1] = ASCII::toUpper((char)c);
                         abuf[alen] = 0;
                         c = getc(fp);
                     } while (c != EOF && !SPACE(c) && c != '=' && c != '>');
@@ -364,14 +373,14 @@ node *parse(FILE *fp, int flags, node *parent, node *&nextsub, node::node_type &
                             c = getc(fp);
                             if (c != EOF && c != '"') do {
                                 vbuf = (char *)realloc(vbuf, ++vlen + 1);
-                                vbuf[vlen-1] = c;
+                                vbuf[vlen-1] = (char)c;
                                 vbuf[vlen] = 0;
                                 c = getc(fp);
                             } while (c != EOF && c != '"');
                         } else {
                             if (c != EOF && c != '>') do {
                                 vbuf = (char *)realloc(vbuf, ++vlen + 1);
-                                vbuf[vlen-1] = c;
+                                vbuf[vlen-1] = (char)c;
                                 vbuf[vlen] = 0;
                                 c = getc(fp);
                             } while (c != EOF && !SPACE(c) && c != '>');
@@ -406,8 +415,8 @@ node *parse(FILE *fp, int flags, node *parent, node *&nextsub, node::node_type &
                     {
                         if (parent &&
                             (parent->type == type ||
-                             type == node::dd && parent->type == node::dt ||
-                             type == node::dt && parent->type == node::dd)
+                             (type == node::dd && parent->type == node::dt) ||
+                             (type == node::dt && parent->type == node::dd))
                            )
                         {
                             nextsub = n;
@@ -449,9 +458,9 @@ node *parse(FILE *fp, int flags, node *parent, node *&nextsub, node::node_type &
 
                         do {
                             entity = (char *)realloc(entity, ++elen + 1);
-                            entity[elen - 1] = toupper(c);
+                            entity[elen - 1] = ASCII::toUpper((char)c);
                             c = getc(fp);
-                        } while (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z');
+                        } while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
                         entity[elen] = 0;
                         if (c != ';')
                             ungetc(c, fp);
@@ -476,11 +485,12 @@ node *parse(FILE *fp, int flags, node *parent, node *&nextsub, node::node_type &
                             c = ' ';
                     if ((flags & PRE1) && c == '\n')
                         ;
-                    else
+                    else {
                         if ((flags & PRE) || c != ' ' || len == 0 || buf[len - 1] != ' ') {
                             buf = (char *)realloc(buf, ++len);
-                            buf[len-1] = c;
+                            buf[len-1] = (char)c;
                         }
+                    }
                     flags &= ~PRE1;
                     c = getc(fp);
                 } while (c != EOF && c != '<');
@@ -503,6 +513,11 @@ node *parse(FILE *fp, int flags, node *parent, node *&nextsub, node::node_type &
                     node *n = new node(node::text);
                     n->txt = buf;
                     l = add(&f, l, n);
+                    buf = 0;
+                }
+                if (buf != 0) {
+                   free(buf); 
+                   buf = 0;
                 }
                 continue;
             }
@@ -531,6 +546,20 @@ public:
         prevItem->setEnabled(false);
         nextItem->setEnabled(false);
         contentsItem->setEnabled(false);
+
+        if (nextURL != 0) {
+            delete[] prevURL;
+            nextURL = 0;
+        }
+        if (nextURL != 0) {
+            delete[] prevURL;
+            nextURL = 0;
+        }
+        if (contentsURL != 0) {
+            delete[] contentsURL;
+            contentsURL = 0;
+        }
+
 
         find_link(fRoot);
     }
@@ -609,9 +638,9 @@ public:
             listener->activateURL(contentsURL);
     }
 
-    virtual void configure(const YRect &r, const bool resized) {
-        YWindow::configure(r, resized);
-        if (resized) layout();
+    virtual void configure(const YRect &r) {
+        YWindow::configure(r);
+        layout();
     }
 
     bool handleKey(const XKeyEvent &key);
@@ -685,11 +714,11 @@ HTextView::HTextView(HTListener *fL, YScrollView *v, YWindow *parent):
     menu->addItem(_("Back"), 0, _("Alt+Left"), actionNone)->setEnabled(false);
     menu->addItem(_("Forward"), 0, _("Alt+Right"), actionNone)->setEnabled(false);
     menu->addSeparator();
-    prevItem = menu->addItem(_("Previous"), 0, "", actionPrev);
-    nextItem = menu->addItem(_("Next"), 0, "", actionNext);
+    prevItem = menu->addItem(_("Previous"), 0, null, actionPrev);
+    nextItem = menu->addItem(_("Next"), 0, null, actionNext);
     menu->addSeparator();
-    contentsItem = menu->addItem(_("Contents"), 0, "", actionContents);
-    menu->addItem(_("Index"), 0, "", actionNone)->setEnabled(false);
+    contentsItem = menu->addItem(_("Contents"), 0, null, actionContents);
+    menu->addItem(_("Index"), 0, null, actionNone)->setEnabled(false);
     menu->addSeparator();
     menu->addItem(_("Close"), 0, _("Ctrl+Q"), actionClose);
 }
@@ -1166,6 +1195,12 @@ void HTextView::handleButton(const XButtonEvent &button) {
 class FileView: public YWindow, public HTListener {
 public:
     FileView(char *path);
+    ~FileView() {
+        if (fPath != 0) {
+            delete[] fPath;
+            fPath = 0;
+        }
+    }
 
     void loadFile();
 
@@ -1201,9 +1236,9 @@ public:
 #endif
     }
 
-    virtual void configure(const YRect &r, const bool resized) {
-        YWindow::configure(r, resized);
-        if (resized) scroll->setGeometry(YRect(0, 0, r.width(), r.height()));
+    virtual void configure(const YRect &r) {
+        YWindow::configure(r);
+        scroll->setGeometry(YRect(0, 0, r.width(), r.height()));
     }
 
     virtual void handleClose() {
@@ -1234,9 +1269,9 @@ FileView::FileView(char *path) {
     setTitle(fPath);
     setClassHint("browser", "IceHelp");
 
-    YIcon *file_icon = YIcon::getIcon("file");
-    small_icon.init(new YPixmap(*file_icon->small()));
-    large_icon.init(new YPixmap(*file_icon->large()));
+    ref<YIcon> file_icon = YIcon::getIcon("file");
+    small_icon = YPixmap::createFromImage(file_icon->small());
+    large_icon = YPixmap::createFromImage(file_icon->large());
 
     Pixmap icons[4] = {
         small_icon->pixmap(), small_icon->mask(),

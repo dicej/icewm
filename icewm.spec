@@ -1,6 +1,6 @@
 
 Name:		icewm
-Version:	1.2.30
+Version:	1.3.7
 Release:	1
 Obsoletes:	icewm-common <= 1.2.2
 Summary:	Fast and small X11 window manager
@@ -64,7 +64,7 @@ GNOME 1.0 menu support for icewm (using gnome 2.x).
   make
 
 %install
-  make DESTDIR=$RPM_BUILD_ROOT install
+  make DESTDIR=$RPM_BUILD_ROOT install install-desktop
   mkdir -p $RPM_BUILD_ROOT/etc/icewm
 
 %clean
@@ -95,6 +95,9 @@ GNOME 1.0 menu support for icewm (using gnome 2.x).
 %{pkgdata}/mailbox/*
 %{pkgdata}/taskbar/*
 %{pkgdata}/themes/icedesert/*
+
+/usr/share/xsessions/icewm-session.desktop
+/usr/share/applications/icewm.desktop
 
 %if %{?_with_menus_gnome2:1}%{!?_with_menus_gnome2:0}
 

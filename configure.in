@@ -60,7 +60,7 @@ fi
 
 if test $(basename $CXX) = "g++" ||
    test $(basename $CXX) = "gcc" ; then
-  ICE_CXX_FLAG_ACCEPT(warn_xxx, -Wall -Wpointer-arith -Wconversion -Wwrite-strings -Winline -Woverloaded-virtual -W)
+  ICE_CXX_FLAG_ACCEPT(warn_xxx, -Wall -Wpointer-arith -Wwrite-strings -Woverloaded-virtual -W)
   ICE_CXX_FLAG_ACCEPT(permissive, -fpermissive)  
 else
   dnl --- Sun ONE doesn't support GCC -W* and -fpermissive
@@ -76,6 +76,18 @@ if test x"$CXX_LINK" = x; then
 fi
 
 AC_SUBST(CXX_LINK)
+
+if test x"$HOSTCXX" = x; then
+  HOSTCXX=$CXX
+fi
+
+AC_SUBST(HOSTCXX)
+
+if test x"$HOSTCXX_LINK" = x; then
+  HOSTCXX_LINK=$CXX
+fi
+
+AC_SUBST(HOSTCXX_LINK)
 
 #this test is broken, because AC_TRY_LINK calls g++
 #AC_MSG_CHECKING([if we need our own C++ allocation operators])
@@ -99,6 +111,8 @@ AC_CHECK_HEADERS(linux/threads.h linux/tasks.h)
 AC_CHECK_HEADERS(sched.h sys/dkstat.h sys/param.h sys/sysctl.h uvm/uvm_param.h)
 
 AC_CHECK_HEADERS(libgen.h)	dnl --  basename() for FreeBSD
+AC_CHECK_HEADERS(machine/apmvar.h)
+AC_CHECK_HEADERS(machine/apm_bios.h)
 
 AC_CHECK_HEADERS(kstat.h,
   [ CORE_LIBS="${CORE_LIBS} -lkstat"
@@ -155,7 +169,7 @@ fi
 dnl ===================================================== Maintaince Support ===
 dnl
 AC_ARG_ENABLE(depend,
-  [  --enable-depend Automatic .h dependencies. Requires GNU make and gcc.],
+  [  --enable-depend         Automatic .h dependencies. Requires GNU make and gcc.],
   [ if test "${enable_depend}" != "no"; then
       features="${features} depend"
       GCCDEP=-MMD
@@ -388,35 +402,34 @@ AC_ARG_ENABLE(shaped-decorations,
 fi
 
 AC_ARG_ENABLE(gradients,
-[  --enable-gradients      Support gradients (experimental,
-                          implies --enable-antialiasing) ])
-  if test "$enable_gradients" = "yes"; then
+[  --disable-gradients     Support gradients])
+  if test "$enable_gradients" != "no"; then
     AC_DEFINE(CONFIG_GRADIENTS, 1, [Define to enable gradient support.])
     enable_antialiasing=yes
     features="${features} gradients"
   fi
 
-AC_ARG_ENABLE(antialiasing,
-[  --enable-antialiasing   Support antialiasing (experimental,
-                          implies --enable-xfreetype) ])
-  if test "$enable_antialiasing" = "yes"; then
-    AC_DEFINE(CONFIG_ANTIALIASING, 1, [Define to enable antialiasing.])
-    features="${features} antialiasing"
-    
-    if test "$enable_xfreetype" = "" ; then
-      enable_xfreetype=implied
-    fi
-  fi
+dnl AC_ARG_ENABLE(antialiasing,
+dnl [  --enable-antialiasing   Support antialiasing (experimental,
+dnl                           implies --enable-xfreetype) ])
+dnl   if test "$enable_antialiasing" = "yes"; then
+dnl     AC_DEFINE(CONFIG_ANTIALIASING, 1, [Define to enable antialiasing.])
+dnl     features="${features} antialiasing"
+dnl     
+dnl     if test "$enable_xfreetype" = "" ; then
+dnl       enable_xfreetype=implied
+dnl     fi
+dnl   fi
 
 AC_ARG_ENABLE(xrandr,
-[ --disable-xrandr         Disable XRANDR extension support])
+[  --disable-xrandr        Disable XRANDR extension support])
   if test "$enable_xrandr" != "no"; then
     AC_DEFINE(CONFIG_XRANDR, 1, [Define to enable XRANDR extension])
     CORE_LIBS="$LIBS -lXrandr -lXrender -lXext"
   fi
 
 AC_ARG_ENABLE(corefonts,
-[  --enable-corefonts   Support X11 core fonts])
+[  --enable-corefonts      Support X11 core fonts])
 
 AC_ARG_ENABLE(xfreetype,
 [  --disable-xfreetype     Don't use XFreeType for text rendering.
@@ -427,12 +440,12 @@ AC_ARG_ENABLE(xfreetype,
   fi
   if test "$enable_xfreetype" != "no" -o "$enable_xfreetype" = "implied"; then
     AC_PATH_PROG(XFT_CONFIG, xft-config,, ${with_xft_arg-${PATH}})
-    if test "${XFT_CONFIG}" == ""; then
+    if test "${XFT_CONFIG}" = ""; then
       AC_PATH_PROG(PKG_CONFIG, pkg-config)
       if test "${PKG_CONFIG}" != ""; then
         ${PKG_CONFIG} xft 2>/dev/null
         if test $? -eq 0 ; then
-          XFT_CONFIG='pkg-config xft'
+          XFT_CONFIG='pkg-config freetype2 xft'
         fi
       fi
     fi
@@ -644,82 +657,99 @@ AC_ARG_ENABLE(lite,
     AC_DEFINE(LITE, 			1,	[Lite version])
   fi
 
-AC_ARG_WITH(gnome-root-property,
-  [  --with-gnome-root-property[=atom]]
-  [                        Name of a root window property indicating that]
-  [                        GNOME is active. Default: GNOME_SM_PROXY.]
-  [--without-gnome-root-property]
-  [                        Assume that GNOME is active when \$SESSION_MANAGER]
-  [                        is set. Most session managers set this variable.])
-  if test "${with_gnome_root_property}" != "no"; then
-    if test "${with_gnome_root_property}" = ""; then
-      with_gnome_root_property="GNOME_SM_PROXY"
-    fi
-    AC_DEFINE_UNQUOTED(CONFIG_GNOME_ROOT_PROPERTY,
-      [ "${with_gnome_root_property}" ],
-      [ Name of a root window property indicating that GNOME is active.])
-  fi
+dnl AC_ARG_WITH(gnome-root-property,
+dnl   [  --with-gnome-root-property[=atom]]
+dnl   [                        Name of a root window property indicating that]
+dnl   [                        GNOME is active. Default: GNOME_SM_PROXY.]
+dnl   [--without-gnome-root-property]
+dnl   [                        Assume that GNOME is active when \$SESSION_MANAGER]
+dnl   [                        is set. Most session managers set this variable.])
+dnl   if test "${with_gnome_root_property}" != "no"; then
+dnl     if test "${with_gnome_root_property}" = ""; then
+dnl       with_gnome_root_property="GNOME_SM_PROXY"
+dnl     fi
+dnl     AC_DEFINE_UNQUOTED(CONFIG_GNOME_ROOT_PROPERTY,
+dnl       [ "${with_gnome_root_property}" ],
+dnl       [ Name of a root window property indicating that GNOME is active.])
+dnl   fi
 
 dnl ========================================================== Image library ===
 dnl
-ICE_ARG_WITH(imlib,
-  [  --with-imlib[=path]       Use Imlib for images [path to imlib-config]])
-ICE_ARG_WITH(xpm,
-  [  --with-xpm[=prefix]       Use libXpm for images [search it in prefix/lib]])
+dnl ICE_ARG_WITH(imlib,
+dnl   [  --with-imlib[=path]       Use Imlib for images [path to imlib-config]])
+dnl ICE_ARG_WITH(xpm,
+dnl   [  --with-xpm[=prefix]       Use libXpm for images [search it in prefix/lib]])
+dnl ICE_ARG_WITH(gdk_pixbuf_xlib,
+dnl    [  --with-gdk_pixbuf_xlib[=prefix]       Use gdk_pixbuf_xlib for images [search it in prefix/lib]])
+dnl 
+dnl if test "${with_imlib_sign}" != "yes"; then
+dnl   if test "${with_xpm_sign}" != "yes"; then
+dnl     if test "${with_gdk_pixbuf_xlib_sign}" != "yes"; then
+dnl       if test "${with_gdk_pixbuf_xlib_sign}" != "no"; then
+dnl         with_gdk_pixbuf_xlib_sign=yes
+dnl       else 
+dnl         if test "${with_imlib_sign}" != "no"; then
+dnl           with_imlib_sign=yes
+dnl         else 
+dnl           with_xpm_sign=yes
+dnl         fi
+dnl       fi
+dnl     fi
+dnl   fi
+dnl fi
 
-if test "${with_imlib_sign}" != "yes"; then
-  if test "${with_xpm_sign}" != "yes"; then
-    if test "${with_imlib_sign}" != "no"; then
-      with_imlib_sign=yes                           # --- IMLIB by default ---
-    else 
-      with_xpm_sign=yes
-    fi
-  fi
-fi
+dnl if test "${with_imlib_sign}" = "yes"; then
+dnl   if test "${with_xpm_sign}" = "yes"; then
+dnl #    if test "${with_xpm_sign}" = "yes"; then
+dnl       AC_MSG_ERROR([libXpm and Imlib can not be used in the same time])
+dnl #    fi
+dnl   fi
+dnl fi
 
-if test "${with_imlib_sign}" = "yes"; then
-  if test "${with_xpm_sign}" = "yes"; then
-    AC_MSG_ERROR([libXpm and Imlib can not be used in the same time])
-  fi
-fi
+IMAGE_CFLAGS=`pkg-config gdk-pixbuf-xlib-2.0 --cflags`
+IMAGE_LIBS=`pkg-config gdk-pixbuf-xlib-2.0  --libs`
+
+AC_DEFINE(CONFIG_GDK_PIXBUF_XLIB, 1, [Define to use gdk_pixbuf_xlib for image rendering])
+    
+image_library=gdk_pixbuf_xlib
 
 dnl ------------------------------------------------------ check for Imlib ---
 dnl
-if test "${with_imlib_sign}" = "yes"; then
-  AC_PATH_PROG(IMLIB_CONFIG, imlib-config,, ${with_imlib_arg-${PATH}})
-  if test "${IMLIB_CONFIG}" = ""; then
-    AC_MSG_ERROR([imlib-config can not be found])
-  else 
-    IMAGE_CFLAGS=`$IMLIB_CONFIG --cflags`
-    IMAGE_LIBS=`$IMLIB_CONFIG --libs`
-
-    AC_DEFINE(CONFIG_IMLIB, 1, [Define to use Imlib for image rendering])
-
-    image_library=Imlib
-  fi
-fi
+dnl if test "${with_imlib_sign}" = "yes"; then
+dnl   AC_PATH_PROG(IMLIB_CONFIG, imlib-config,, ${with_imlib_arg-${PATH}})
+dnl   if test "${IMLIB_CONFIG}" = ""; then
+dnl     AC_MSG_ERROR([imlib-config can not be found])
+dnl   else 
+dnl     IMAGE_CFLAGS=`$IMLIB_CONFIG --cflags`
+dnl     IMAGE_LIBS=`$IMLIB_CONFIG --libs`
+dnl 
+dnl     AC_DEFINE(CONFIG_IMLIB, 1, [Define to use Imlib for image rendering])
+dnl 
+dnl     image_library=Imlib
+dnl   fi
+dnl fi
 
 dnl -------------------------------------------------------- check for Xpm ---
 dnl
-if test "${with_xpm_sign}" = "yes"; then
-  if test x"$with_xpm_arg" != x; then
-    xpm_cflags="-I${with_xpm_arg}/include"
-    xpm_lflags="-L${with_xpm_arg}/lib"
-  fi
-  AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
-    [ IMAGE_CFLAGS="${xpm_cflags}"
-      IMAGE_LIBS="${xpm_lflags} -lXpm"
-
-      AC_DEFINE(CONFIG_XPM, 1, [Define to use libXpm for image rendering])
-      no_imlib=yes ],
-    [# if test "${with_xpm_sign}" = ""; then
-        AC_MSG_ERROR([libXpm can not be found])
-     # fi 
-    ],
-    [ $xpm_lflags ])
-    
-  image_library=libXpm
-fi
+dnl if test "${with_xpm_sign}" = "yes"; then
+dnl   if test x"$with_xpm_arg" != x; then
+dnl     xpm_cflags="-I${with_xpm_arg}/include"
+dnl     xpm_lflags="-L${with_xpm_arg}/lib"
+dnl   fi
+dnl   AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
+dnl     [ IMAGE_CFLAGS="${xpm_cflags}"
+dnl       IMAGE_LIBS="${xpm_lflags} -lXpm"
+dnl 
+dnl       AC_DEFINE(CONFIG_XPM, 1, [Define to use libXpm for image rendering])
+dnl       no_imlib=yes ],
+dnl     [# if test "${with_xpm_sign}" = ""; then
+dnl         AC_MSG_ERROR([libXpm can not be found])
+dnl      # fi 
+dnl     ],
+dnl     [ $xpm_lflags ])
+dnl     
+dnl   image_library=libXpm
+dnl fi
 
 dnl --------------------- We need mkfontdir to create fonts.dir for Infadel2 ---
 AC_ARG_WITH(mkfontdir,
@@ -806,15 +836,15 @@ AC_ARG_ENABLE(menus-gnome2,
     
       if test "${PKG_CONFIG}" != ""; then
 	GNOME_VER=2
-	GNOME2_CFLAGS=`pkg-config --cflags gnome-desktop-2.0`
-	GNOME2_LIBS=`pkg-config --libs gnome-desktop-2.0`
+	GNOME2_CFLAGS=`pkg-config --cflags gnome-desktop-2.0 libgnomeui-2.0`
+	GNOME2_LIBS=`pkg-config --libs gnome-desktop-2.0 libgnomeui-2.0`
 
 	AC_DEFINE(CONFIG_GNOME_MENUS, 1, [Define to make IceWM more GNOME-friendly])
 
 	APPLICATIONS="${APPLICATIONS} icewm-menu-gnome2"
 	GNOME2_PREFIX=`pkg-config --variable=prefix gnome-desktop-2.0`
 	GWMDIR="${GNOME2_PREFIX}/share/gnome/wm-properties/"
-	CONFIG_GNOME2_MENU_DIR="${GNOME2_PREFIX}/share/gnome/vfolders/"
+	CONFIG_GNOME2_MENU_DIR="${GNOME2_PREFIX}/share/desktop-directories/"
       fi
 
       if test "${GNOME2_CFLAGS}" = ""; then
@@ -883,7 +913,7 @@ BASEBINS=""
 
 for binary in ${APPLICATIONS}; do
   BASEOBJS="${BASEOBJS} \$(${binary}_OBJS)"
-  BASEBINS="${BASEBINS} ${binary}"
+  BASEBINS="${BASEBINS} ${binary}\$(EXEEXT)"
 done
 
 AC_SUBST(BASEOBJS)
@@ -894,7 +924,7 @@ TESTBINS=""
 
 for binary in ${TESTCASES}; do
   TESTOBJS="${TESTOBJS} \$(${binary}_OBJS)"
-  TESTBINS="${TESTBINS} ${binary}"
+  TESTBINS="${TESTBINS} ${binary}\$(EXEEXT)"
 done
 
 AC_SUBST(TESTOBJS)
@@ -902,7 +932,7 @@ AC_SUBST(TESTBINS)
 
 dnl -------------------------------------------------------- Install targets ---
 TARGETS_INSTALL=`for target in ${TARGETS}; do echo $ECHO_N "install-${target} $ECHO_C"; done`
-BINFILES=`for binary in ${APPLICATIONS}; do echo $ECHO_N "\\\$(top_srcdir)/src/${binary} $ECHO_C"; done`
+BINFILES=`for binary in ${APPLICATIONS}; do echo $ECHO_N "\\\$(top_srcdir)/src/${binary}\\\$(EXEEXT) $ECHO_C"; done`
 
 AC_SUBST(TARGETS)
 AC_SUBST(TARGETS_INSTALL)
@@ -920,12 +950,13 @@ AC_SUBST(INSTALLMAN,"${INSTALL_DATA}")
 dnl --------------------------------------------------------- Generate files ---
 AC_CONFIG_COMMANDS(config.status, [
     for binary in ${ac_targets_binaries}; do
-      echo "${binary}: \$(${binary}_OBJS)" >> "${srcdir}/src/Makefile"
+      echo "${binary}\$(EXEEXT): \$(${binary}_OBJS)" >> "${srcdir}/src/Makefile"
     done
     
     if test "${ac_depend}" = "yes"; then
       echo >> "${srcdir}/src/Makefile"
       echo '-include $(OBJECTS:.o=.d)' >> "${srcdir}/src/Makefile"
+      echo '-include $(genpref_OBJS:.o=.d)' >> "${srcdir}/src/Makefile"
     fi
 ],[
     ac_targets_binaries="${APPLICATIONS} ${TESTCASES}"

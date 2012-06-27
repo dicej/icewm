@@ -8,7 +8,7 @@ srcdir     = .
 top_srcdir = .
 
 PACKAGE = icewm
-VERSION = 1.2.30
+VERSION = 1.3.7
 
 PREFIX = /usr
 BINDIR = /usr/X11R6/bin
@@ -17,8 +17,9 @@ CFGDIR = /etc/icewm
 LOCDIR = /usr/share/locale
 KDEDIR = /usr/share
 DOCDIR = /usr/share/doc
-MANDIR = /usr/man
-GWMDIR = 
+MANDIR = /usr/share/man
+
+EXEEXT = 
 
 INSTALL    = /usr/bin/install -c
 INSTALLDIR = /usr/bin/install -c -m 755 -d
@@ -32,7 +33,7 @@ DESTDIR     =
 
 ################################################################################
 
-BINFILES    = $(top_srcdir)/src/icewm $(top_srcdir)/src/icewm-session $(top_srcdir)/src/icesh $(top_srcdir)/src/icewmhint $(top_srcdir)/src/icewmbg $(top_srcdir)/src/icewmtray $(top_srcdir)/src/icehelp 
+BINFILES    = $(top_srcdir)/src/icewm$(EXEEXT) $(top_srcdir)/src/icewm-session$(EXEEXT) $(top_srcdir)/src/icesh$(EXEEXT) $(top_srcdir)/src/icewmhint$(EXEEXT) $(top_srcdir)/src/icewmbg$(EXEEXT) $(top_srcdir)/src/icewmtray$(EXEEXT) $(top_srcdir)/src/icehelp$(EXEEXT)  icewm-set-gnomewm
 LIBFILES    = lib/preferences lib/winoptions lib/keys \
               lib/menu lib/toolbar # lib/programs
 DOCFILES    = README BUGS CHANGES COPYING AUTHORS INSTALL VERSION icewm.lsm
@@ -40,8 +41,6 @@ MANFILES    = icewm.1
 XPMDIRS     = icons ledclock taskbar mailbox cursors
 THEMES      = nice motif win95 warp3 warp4 metal2 gtk2 Infadel2 nice2 \
               icedesert yellowmotif
-
-GNOMEFILES  = lib/IceWM.desktop
 
 all:		base nls
 install:	install-base install-nls 
@@ -54,8 +53,6 @@ docs:
 
 nls:
 	@cd po; $(MAKE) all
-
-gnome:
 
 srcclean:
 	@cd src; $(MAKE) clean
@@ -133,13 +130,15 @@ install-nls: nls
 	@echo ------------------------------------------
 
 install-man:
+	@$(INSTALLDIR) "$(DESTDIR)$(MANDIR)/man1"
 	@for man in $(MANFILES); do \
 		$(INSTALLMAN) doc/$$man.man $(DESTDIR)$(MANDIR)/man1/$$man; \
 	done
 
-install-gnome: gnome
+install-desktop:
 	@echo ------------------------------------------
-	@echo Installing icewm-gnome in $(DESTDIR)$(GWMDIR)
-	@$(INSTALLDIR) "$(DESTDIR)$(GWMDIR)"
-	@$(INSTALLLIB) "$(top_srcdir)/lib/IceWM.desktop" "$(DESTDIR)$(GWMDIR)"
+	@$(INSTALLDIR) "$(DESTDIR)/usr/share/xsessions"
+	@$(INSTALLDIR) "$(DESTDIR)/usr/share/applications"
+	@$(INSTALLLIB) "$(top_srcdir)/lib/icewm-session.desktop" "$(DESTDIR)/usr/share/xsessions/icewm-session.desktop"
+	@$(INSTALLLIB) "$(top_srcdir)/lib/icewm.desktop" "$(DESTDIR)/usr/share/applications/icewm.desktop"
 	@echo ------------------------------------------

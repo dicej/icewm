@@ -20,8 +20,8 @@ public:
 
     virtual int getOffset();
     
-    virtual const char *getText();
-    virtual YIcon *getIcon();
+    virtual ustring getText();
+    virtual ref<YIcon> getIcon();
     ClientData *getFrame() const { return fFrame; }
     int getWorkspace() const { return fWorkspace; }
 private:
@@ -52,8 +52,7 @@ public:
     void handleFocus(const XFocusChangeEvent &focus);
     virtual void handleClose();
 
-    virtual void configure(const YRect &r,
-                           const bool resized);
+    virtual void configure(const YRect &r);
     void relayout();
 
     WindowListItem *addWindowListApp(YFrameWindow *frame);
