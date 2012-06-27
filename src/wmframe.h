@@ -11,6 +11,7 @@
 #include "wmoption.h"
 #include "WinMgr.h"
 #include "wmmgr.h"
+#include "yicon.h"
 
 class YClientContainer;
 class MiniIcon;
@@ -195,7 +196,7 @@ public:
     virtual void popupSystemMenu(YWindow *owner);
     virtual void handlePopDown(YPopupWindow *popup);
 
-    virtual void configure(const YRect &r, const bool resized);
+    virtual void configure(const YRect &r);
     
     void getNewPos(const XConfigureRequestEvent &cr,
                    int &cx, int &cy, int &cw, int &ch);
@@ -249,7 +250,9 @@ public:
         foMinimized             = (1 << 13),
         foDoNotFocus            = (1 << 14),
         foForcedClose           = (1 << 15),
-        foNoFocusOnMap          = (1 << 16)
+        foNoFocusOnMap          = (1 << 16),
+        foNoIgnoreTaskBar       = (1 << 17),
+        foAppTakesFocus         = (1 << 18)
     };
 
     unsigned long frameFunctions() const { return fFrameFunctions; }
@@ -306,8 +309,8 @@ public:
     YFrameWindow *mainOwner();
 
 #ifndef LITE
-    YIcon *getClientIcon() const { return fFrameIcon; }
-    YIcon *clientIcon() const;
+    ref<YIcon> getClientIcon() const { return fFrameIcon; }
+    ref<YIcon> clientIcon() const;
 #endif
 
     void getNormalGeometryInner(int *x, int *y, int *w, int *h);
@@ -329,6 +332,7 @@ public:
     void updateLayer(bool restack = true);
     //void updateWorkspace();
     void updateLayout();
+    void performLayout();
 
     void updateMwmHints();
     void updateProperties();
@@ -397,11 +401,11 @@ public:
     }
 
 #ifndef LITE
-    virtual YIcon *getIcon() const { return clientIcon(); }
+    virtual ref<YIcon> getIcon() const { return clientIcon(); }
 #endif
 
-    virtual const char *getTitle() const { return client()->windowTitle(); }
-    virtual const char *getIconTitle() const { return client()->iconTitle(); }
+    virtual ustring getTitle() const { return client()->windowTitle(); }
+    virtual ustring getIconTitle() const { return client()->iconTitle(); }
 
     YFrameButton *getButton(char c);
     void positionButton(YFrameButton *b, int &xPos, bool onRight);
@@ -426,6 +430,7 @@ public:
     void setPrevFocus(YFrameWindow *f) { fPrevFocusFrame = f; }
 
     void insertFocusFrame(bool focus);
+    void insertLastFocusFrame();
     void removeFocusFrame();
 
     void updateUrgency();
@@ -499,7 +504,7 @@ private:
     WindowListItem *fWinListItem;
 #endif
 #ifndef LITE
-    YIcon *fFrameIcon;
+    ref<YIcon> fFrameIcon;
 #endif
 
     YFrameWindow *fOwner;
@@ -529,6 +534,12 @@ private:
     int fStrutTop;
     int fStrutBottom;
 
+    int fShapeWidth;
+    int fShapeHeight;
+    int fShapeTitleY;
+    int fShapeBorderX;
+    int fShapeBorderY;
+
     bool fWmUrgency;
     bool fClientUrgency;
     bool fTypeDesktop;
@@ -542,6 +553,7 @@ private:
         waLeft,
         waRight
     };
+
     void wmArrange(int tcb, int lcr);
     void wmSnapMove(int tcb, int lcr);
     int getTopCoord(int my, YFrameWindow **w, int count);
@@ -557,6 +569,7 @@ private:
     void setSize(int, int);
     void setWindowGeometry(const YRect &r) {
         YWindow::setGeometry(r);
+        performLayout();
     }
     friend class MiniIcon;
 };
@@ -584,15 +597,13 @@ extern ref<YPixmap> titleQ[2];
 extern ref<YPixmap> menuButton[3];
 
 #ifdef CONFIG_GRADIENTS
-class YPixbuf;
-
-extern ref<YPixbuf> rgbFrameT[2][2];
-extern ref<YPixbuf> rgbFrameL[2][2];
-extern ref<YPixbuf> rgbFrameR[2][2];
-extern ref<YPixbuf> rgbFrameB[2][2];
-extern ref<YPixbuf> rgbTitleS[2];
-extern ref<YPixbuf> rgbTitleT[2];
-extern ref<YPixbuf> rgbTitleB[2];
+extern ref<YImage> rgbFrameT[2][2];
+extern ref<YImage> rgbFrameL[2][2];
+extern ref<YImage> rgbFrameR[2][2];
+extern ref<YImage> rgbFrameB[2][2];
+extern ref<YImage> rgbTitleS[2];
+extern ref<YImage> rgbTitleT[2];
+extern ref<YImage> rgbTitleB[2];
 #endif
 
 #endif

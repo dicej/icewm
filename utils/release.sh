@@ -3,7 +3,7 @@
 #cvs () { echo cvs $* }
 
 CVSROOT=':pserver:anonymous@cvs.icewm.sourceforge.net:/cvsroot/icewm'
-MODULE='icewm-1.2'
+MODULE='icewm-1.3'
 SRCDIR="$MODULE"
 
 if [ -d "$MODULE" ]; then
@@ -30,8 +30,7 @@ echo Preparing autoconf
 ./autogen.sh
 
 echo Running configure
-./configure --quiet --prefix=/usr --exec-prefix=/usr/X11R6 --sysconfdir=/etc \
-	    --enable-i18n --enable-nls
+./configure --quiet --prefix=/usr --exec-prefix=/usr/X11R6 --sysconfdir=/etc
 
 echo Making distribution information
 make -s docs

@@ -22,6 +22,8 @@ public:
     virtual YSurface getSurface();
 
 private:
+    virtual void paint(Graphics &g, const YRect &r);
+
     static YTimer *fRaiseTimer;
     long fWorkspace;
 
@@ -40,7 +42,9 @@ public:
     WorkspacesPane(YWindow *parent);
     ~WorkspacesPane();
 
-    void configure(const YRect &r, const bool resized);
+    void repaint();
+
+    void configure(const YRect &r);
 
     WorkspaceButton *workspaceButton(long n);
 private:
@@ -51,8 +55,8 @@ extern ref<YPixmap> workspacebuttonPixmap;
 extern ref<YPixmap> workspacebuttonactivePixmap;
 
 #ifdef CONFIG_GRADIENTS
-extern ref<YPixbuf> workspacebuttonPixbuf;
-extern ref<YPixbuf> workspacebuttonactivePixbuf;
+extern ref<YImage> workspacebuttonPixbuf;
+extern ref<YImage> workspacebuttonactivePixbuf;
 #endif
 
 #endif

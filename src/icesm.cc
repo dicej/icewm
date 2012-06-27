@@ -2,6 +2,7 @@
 #include "base.h"
 #include "yxapp.h"
 #include "sysdep.h"
+#include "yconfig.h"
 
 char const *ApplicationName = ICESMEXE;
 
@@ -18,12 +19,12 @@ public:
     }
 
     void runScript(const char *scriptName) {
-        char *scriptFile = app->findConfigFile(scriptName, X_OK);
-        const char *args[] = { scriptFile, 0, 0 };
+        upath scriptFile = YApplication::findConfigFile(scriptName);
+        cstring cs(scriptFile.path());
+        const char *args[] = { cs.c_str(), 0, 0 };
 
-        MSG(("Running session script: %s", scriptFile));
-        app->runProgram(scriptFile, args);
-        delete[] scriptFile;
+        MSG(("Running session script: %s", cs.c_str()));
+        app->runProgram(cs.c_str(), args);
     }
 
     void runIcewmbg(bool quit = false) {
@@ -72,25 +73,25 @@ public:
             int status = -1;
             int pid = -1;
 
-            pid = waitpid(-1, &status, 0);
-            MSG(("waitpid()=%d, status=%d", pid, status));
-            if (pid == wm_pid) {
-                wm_pid = -1;
-                if (WIFEXITED(status)) {
-                    exit(0);
-                } else {
-                    if (WEXITSTATUS(status) != 0)
-                        runWM();
-                    else if (WIFSIGNALED(status) != 0)
-                        runWM();
+            while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+                MSG(("waitpid()=%d, status=%d", pid, status));
+                if (pid == wm_pid) {
+                    wm_pid = -1;
+                    if (WIFEXITED(status)) {
+                        exit(0);
+                    } else {
+                        if (WEXITSTATUS(status) != 0)
+                            runWM();
+                        else if (WIFSIGNALED(status) != 0)
+                            runWM();
+                    }
                 }
+                if (pid == tray_pid)
+                    tray_pid = -1;
+                if (pid == bg_pid)
+                    bg_pid = -1;
             }
-            if (pid == tray_pid)
-                tray_pid = -1;
-            if (pid == bg_pid)
-                bg_pid = -1;
         }
-        YApplication::handleSignal(sig);
     }
 
 private:

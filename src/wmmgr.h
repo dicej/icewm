@@ -48,15 +48,16 @@ public:
     YWindowManager(YWindow *parent, Window win = 0);
     virtual ~YWindowManager();
 
-    void grabKeys();
+    virtual void grabKeys();
 
     virtual void handleButton(const XButtonEvent &button);
     virtual void handleClick(const XButtonEvent &up, int count);
     virtual bool handleKey(const XKeyEvent &key);
 
+    virtual void handleConfigure(const XConfigureEvent &configure);
     virtual void handleConfigureRequest(const XConfigureRequestEvent &configureRequest);
     virtual void handleMapRequest(const XMapRequestEvent &mapRequest);
-    virtual void handleUnmap(const XUnmapEvent &unmap);
+    virtual void handleUnmapNotify(const XUnmapEvent &unmap);
     virtual void handleDestroyWindow(const XDestroyWindowEvent &destroyWindow);
     virtual void handleClientMessage(const XClientMessageEvent &message);
     virtual void handleProperty(const XPropertyEvent &property);
@@ -92,8 +93,9 @@ public:
 
     void removeClientFrame(YFrameWindow *frame);
 
-    void getWorkArea(const YFrameWindow *frame, int *mx, int *my, int *Mx, int *My, int xiscreen = -1) const;
-    void getWorkAreaSize(const YFrameWindow *frame, int *Mw,int *Mh);
+    void UpdateScreenSize(XEvent *event);
+    void getWorkArea(YFrameWindow *frame, int *mx, int *my, int *Mx, int *My, int xiscreen = -1) const;
+    void getWorkAreaSize(YFrameWindow *frame, int *Mw,int *Mh);
 
     int calcCoverage(bool down, YFrameWindow *frame, int x, int y, int w, int h);
     void tryCover(bool down, YFrameWindow *frame, int x, int y, int w, int h,
@@ -122,10 +124,10 @@ public:
 
     void restackWindows(YFrameWindow *win);
     void focusTopWindow();
-    YFrameWindow *getLastFocus(long workspace = -1);
+    YFrameWindow *getLastFocus(bool skipSticky = false, long workspace = -1);
     void focusLastWindow();
     bool focusTop(YFrameWindow *f);
-    void relocateWindows(long workspace, int dx, int dy);
+    void relocateWindows(long workspace, int screen, int dx, int dy);
     void updateClientList();
 
     YMenu *createWindowMenu(YMenu *menu, long workspace);
@@ -190,12 +192,12 @@ public:
 
     void doWMAction(long action);
     void lockFocus() { 
-        MSG(("lockFocus %d", lockFocusCount)); 
+        //MSG(("lockFocus %d", lockFocusCount));
         lockFocusCount++; 
     }
     void unlockFocus() { 
         lockFocusCount--; 
-        MSG(("unlockFocus %d", lockFocusCount)); 
+        //MSG(("unlockFocus %d", lockFocusCount));
     }
     bool focusLocked() { return lockFocusCount != 0; }
 
@@ -210,7 +212,7 @@ private:
         YFrameWindow *frame;
     };
 
-    void updateArea(long workspace, int l, int t, int r, int b);
+    void updateArea(long workspace, int screen_number, int l, int t, int r, int b);
     bool handleWMKey(const XKeyEvent &key, KeySym k, unsigned int m, unsigned int vm);
 
     YFrameWindow *fFocusWin;
@@ -222,10 +224,13 @@ private:
     long fActiveWorkspace;
     long fLastWorkspace;
     YFrameWindow *fColormapWindow;
-    int fWorkAreaCount;
+
+    long fWorkAreaWorkspaceCount;
+    int fWorkAreaScreenCount;
     struct WorkAreaRect {
         int fMinX, fMinY, fMaxX, fMaxY;
-    } *fWorkArea;
+    } **fWorkArea;
+
     EdgeSwitch *fLeftSwitch, *fRightSwitch, *fTopSwitch, *fBottomSwitch;
     bool fShuttingDown;
     int fArrangeCount;
@@ -355,6 +360,6 @@ extern Atom _XA_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR;
 
 extern Atom XA_IcewmWinOptHint;
 
-extern YIcon *defaultAppIcon;
+extern ref<YIcon> defaultAppIcon;
 
 #endif

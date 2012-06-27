@@ -29,10 +29,10 @@ ref<YPixmap> frameBR[2][2];
 #endif
 
 #ifdef CONFIG_GRADIENTS
-ref<YPixbuf> rgbFrameT[2][2];
-ref<YPixbuf> rgbFrameL[2][2];
-ref<YPixbuf> rgbFrameR[2][2];
-ref<YPixbuf> rgbFrameB[2][2];
+ref<YImage> rgbFrameT[2][2];
+ref<YImage> rgbFrameL[2][2];
+ref<YImage> rgbFrameR[2][2];
+ref<YImage> rgbFrameB[2][2];
 #endif
 
 void YFrameWindow::updateMenu() {
@@ -204,119 +204,134 @@ void YFrameWindow::setShape() {
 #endif
 
 void YFrameWindow::layoutShape() {
-#ifdef CONFIG_SHAPED_DECORATION
-    if (shapesSupported &&
-        (frameDecors() & fdBorder) &&
-        !(isIconic() || isFullscreen()))
+
+    if (fShapeWidth != width() ||
+        fShapeHeight != height() ||
+        fShapeTitleY != titleY() ||
+        fShapeBorderX != borderX() ||
+        fShapeBorderY != borderY())
     {
-        int const a(focused() ? 1 : 0);
-        int const t((frameDecors() & fdResize) ? 0 : 1);
+        fShapeWidth = width();
+        fShapeHeight = height();
+        fShapeTitleY = titleY();
+        fShapeBorderX = borderX();
+        fShapeBorderY = borderY();
 
-        Pixmap shape(YPixmap::createMask(width(), height()));
-        Graphics g(shape, width(), height());
-
-        g.setColorPixel(1);
-        g.fillRect(0, 0, width(), height());
-
-        const int xTL(frameTL[t][a] != null ? frameTL[t][a]->width() : 0),
-            xTR(width() -
-                (frameTR[t][a] != null ? frameTR[t][a]->width() : 0)),
-            xBL(frameBL[t][a] != null ? frameBL[t][a]->width() : 0),
-            xBR(width() -
-                (frameBR[t][a] != null ? frameBR[t][a]->width() : 0));
-        const int yTL(frameTL[t][a] != null ? frameTL[t][a]->height() : 0),
-            yBL(height() -
-                (frameBL[t][a] != null ? frameBL[t][a]->height() : 0)),
-            yTR(frameTR[t][a] != null ? frameTR[t][a]->height() : 0),
-            yBR(height() -
-                (frameBR[t][a] != null ? frameBR[t][a]->height() : 0));
-
-        if (frameTL[t][a] != null) {
-            g.copyDrawable(frameTL[t][a]->mask(), 0, 0,
-                           frameTL[t][a]->width(), frameTL[t][a]->height(),
-                           0, 0);
-            if (protectClientWindow)
-                g.fillRect(borderX(), borderY(),
-                           frameTL[t][a]->width() - borderX(),
-                           frameTL[t][a]->height() - borderY());
+#ifdef CONFIG_SHAPED_DECORATION
+        if (shapesSupported &&
+            (frameDecors() & fdBorder) &&
+            !(isIconic() || isFullscreen()))
+        {
+            int const a(focused() ? 1 : 0);
+            int const t((frameDecors() & fdResize) ? 0 : 1);
+    
+            Pixmap shape = XCreatePixmap(xapp->display(), desktop->handle(), width(), height(), 1);
+            Graphics g(shape, width(), height());
+    
+            g.setColorPixel(1);
+            g.fillRect(0, 0, width(), height());
+    
+            const int xTL(frameTL[t][a] != null ? frameTL[t][a]->width() : 0),
+                xTR(width() -
+                    (frameTR[t][a] != null ? frameTR[t][a]->width() : 0)),
+                xBL(frameBL[t][a] != null ? frameBL[t][a]->width() : 0),
+                xBR(width() -
+                    (frameBR[t][a] != null ? frameBR[t][a]->width() : 0));
+            const int yTL(frameTL[t][a] != null ? frameTL[t][a]->height() : 0),
+                yBL(height() -
+                    (frameBL[t][a] != null ? frameBL[t][a]->height() : 0)),
+                yTR(frameTR[t][a] != null ? frameTR[t][a]->height() : 0),
+                yBR(height() -
+                    (frameBR[t][a] != null ? frameBR[t][a]->height() : 0));
+    
+            if (frameTL[t][a] != null) {
+                g.copyDrawable(frameTL[t][a]->mask(), 0, 0,
+                               frameTL[t][a]->width(), frameTL[t][a]->height(),
+                               0, 0);
+                if (protectClientWindow)
+                    g.fillRect(borderX(), borderY(),
+                               frameTL[t][a]->width() - borderX(),
+                               frameTL[t][a]->height() - borderY());
+            }
+            if (frameTR[t][a] != null) {
+                g.copyDrawable(frameTR[t][a]->mask(), 0, 0,
+                               frameTR[t][a]->width(), frameTR[t][a]->height(),
+                               xTR, 0);
+                if (protectClientWindow)
+                    g.fillRect(xTR, borderY(),
+                               frameTR[t][a]->width() - borderX(),
+                               frameTR[t][a]->height() - borderY());
+            }
+            if (frameBL[t][a] != null) {
+                g.copyDrawable(frameBL[t][a]->mask(), 0, 0,
+                               frameBL[t][a]->width(), frameBL[t][a]->height(),
+                               0, yBL);
+                if (protectClientWindow)
+                    g.fillRect(borderX(), yBL,
+                               frameBL[t][a]->width() - borderX(),
+                               frameBL[t][a]->height() - borderY());
+            }
+            if (frameBR[t][a] != null) {
+                g.copyDrawable(frameBR[t][a]->mask(), 0, 0,
+                               frameBR[t][a]->width(), frameBL[t][a]->height(),
+                               xBR, yBR);
+                if (protectClientWindow)
+                    g.fillRect(xBR, yBR,
+                               frameBR[t][a]->width() - borderX(),
+                               frameBR[t][a]->width() - borderY());
+            }
+    
+            if (frameT[t][a] != null)
+                g.repHorz(frameT[t][a]->mask(),
+                          frameT[t][a]->width(), frameT[t][a]->height(),
+                          xTL, 0, xTR - xTL);
+            if (frameB[t][a] != null)
+                g.repHorz(frameB[t][a]->mask(),
+                          frameB[t][a]->width(), frameB[t][a]->height(),
+                          xBL, height() - frameB[t][a]->height(), xBR - xBL);
+            if (frameL[t][a] != null)
+                g.repVert(frameL[t][a]->mask(),
+                          frameL[t][a]->width(), frameL[t][a]->height(),
+                          0, yTL, yBL - yTL);
+            if (frameR[t][a] != null)
+                g.repVert(frameR[t][a]->mask(),
+                          frameR[t][a]->width(), frameR[t][a]->height(),
+                          width() - frameR[t][a]->width(), yTR, yBR - yTR);
+    
+            if (titlebar() && titleY())
+                titlebar()->renderShape(shape);
+            XShapeCombineMask(xapp->display(), handle(),
+                              ShapeBounding, 0, 0, shape, ShapeSet);
+            XFreePixmap(xapp->display(), shape);
+        } else {
+            XShapeCombineMask(xapp->display(), handle(),
+                              ShapeBounding, 0, 0, None, ShapeSet);
         }
-        if (frameTR[t][a] != null) {
-            g.copyDrawable(frameTR[t][a]->mask(), 0, 0,
-                           frameTR[t][a]->width(), frameTR[t][a]->height(),
-                           xTR, 0);
-            if (protectClientWindow)
-                g.fillRect(xTR, borderY(),
-                           frameTR[t][a]->width() - borderX(),
-                           frameTR[t][a]->height() - borderY());
-        }
-        if (frameBL[t][a] != null) {
-            g.copyDrawable(frameBL[t][a]->mask(), 0, 0,
-                           frameBL[t][a]->width(), frameBL[t][a]->height(),
-                           0, yBL);
-            if (protectClientWindow)
-                g.fillRect(borderX(), yBL,
-                           frameBL[t][a]->width() - borderX(),
-                           frameBL[t][a]->height() - borderY());
-        }
-        if (frameBR[t][a] != null) {
-            g.copyDrawable(frameBR[t][a]->mask(), 0, 0,
-                           frameBR[t][a]->width(), frameBL[t][a]->height(),
-                           xBR, yBR);
-            if (protectClientWindow)
-                g.fillRect(xBR, yBR,
-                           frameBR[t][a]->width() - borderX(),
-                           frameBR[t][a]->width() - borderY());
-        }
-
-        if (frameT[t][a] != null)
-            g.repHorz(frameT[t][a]->mask(),
-                      frameT[t][a]->width(), frameT[t][a]->height(),
-                      xTL, 0, xTR - xTL);
-        if (frameB[t][a] != null)
-            g.repHorz(frameB[t][a]->mask(),
-                      frameB[t][a]->width(), frameB[t][a]->height(),
-                      xBL, height() - frameB[t][a]->height(), xBR - xBL);
-        if (frameL[t][a] != null)
-            g.repVert(frameL[t][a]->mask(),
-                      frameL[t][a]->width(), frameL[t][a]->height(),
-                      0, yTL, yBL - yTL);
-        if (frameR[t][a] != null)
-            g.repVert(frameR[t][a]->mask(),
-                      frameR[t][a]->width(), frameR[t][a]->height(),
-                      width() - frameR[t][a]->width(), yTR, yBR - yTR);
-
-        if (titlebar() && titleY())
-            titlebar()->renderShape(shape);
-        XShapeCombineMask(xapp->display(), handle(),
-                          ShapeBounding, 0, 0, shape, ShapeSet);
-        XFreePixmap(xapp->display(), shape);
-    } else {
-        XShapeCombineMask(xapp->display(), handle(),
-                          ShapeBounding, 0, 0, None, ShapeSet);
-    }
 #endif
 #ifdef CONFIG_SHAPE
-    setShape();
+        setShape();
 #endif
+    }
 }
-
-void YFrameWindow::configure(const YRect &r, const bool resized) {
+    
+void YFrameWindow::configure(const YRect &r) {
     MSG(("configure %d %d %d %d", r.x(), r.y(), r.width(), r.height()));
 
-    YWindow::configure(r, resized);
+    YWindow::configure(r);
 
+    performLayout();
+}
+
+void YFrameWindow::performLayout()
+{
     layoutTitleBar();
     layoutButtons();
     layoutResizeIndicators();
     layoutClient();
-    if (resized) {
-        layoutShape();
-        if (affectsWorkArea())
-            manager->updateWorkArea();
-    }
+    layoutShape();
+    if (affectsWorkArea())
+        manager->updateWorkArea();
 
-/// TODO #warning "make a test program for this"
-    ///if (x != oldX || y != oldY)
     sendConfigure();
 
 // hack (joel)
@@ -364,16 +379,16 @@ YFrameButton *YFrameWindow::getButton(char c) {
 void YFrameWindow::positionButton(YFrameButton *b, int &xPos, bool onRight) {
     /// !!! clean this up
     if (b == fMenuButton) {
-        const unsigned bw((wmLook == lookPixmap || wmLook == lookMetal ||
+        const unsigned bw(((wmLook == lookPixmap || wmLook == lookMetal ||
                            wmLook == lookGtk || wmLook == lookFlat ) &&
-                          showFrameIcon || b->getImage(0) == null ?
-                          titleY() : b->getImage(0)->width());
+                          showFrameIcon) || b->getPixmap(0) == null ?
+                          titleY() : b->getPixmap(0)->width());
 
         if (onRight) xPos -= bw;
         b->setGeometry(YRect(xPos, 0, bw, titleY()));
         if (!onRight) xPos += bw;
     } else if (wmLook == lookPixmap || wmLook == lookMetal || wmLook == lookGtk || wmLook == lookFlat ) {
-        const unsigned bw(b->getImage(0) != null ? b->getImage(0)->width() : titleY());
+        const unsigned bw(b->getPixmap(0) != null ? b->getPixmap(0)->width() : titleY());
 
         if (onRight) xPos -= bw;
         b->setGeometry(YRect(xPos, 0, bw, titleY()));
@@ -395,47 +410,54 @@ void YFrameWindow::layoutButtons() {
 
     unsigned long decors = frameDecors();
 
-    if (fMinimizeButton)
+    if (fMinimizeButton) {
         if (decors & fdMinimize)
             fMinimizeButton->show();
         else
             fMinimizeButton->hide();
+    }
 
-    if (fMaximizeButton)
+    if (fMaximizeButton) {
         if (decors & fdMaximize)
             fMaximizeButton->show();
         else
             fMaximizeButton->hide();
+    }
 
-    if (fRollupButton)
+    if (fRollupButton) {
         if (decors & fdRollup)
             fRollupButton->show();
         else
             fRollupButton->hide();
+    }
 
-    if (fHideButton)
+    if (fHideButton) {
         if (decors & fdHide)
             fHideButton->show();
         else
             fHideButton->hide();
+    }
 
-    if (fCloseButton)
+    if (fCloseButton) {
         if ((decors & fdClose))
             fCloseButton->show();
         else
             fCloseButton->hide();
+    }
 
-    if (fMenuButton)
+    if (fMenuButton) {
         if (decors & fdSysMenu)
             fMenuButton->show();
         else
             fMenuButton->hide();
+    }
 
-    if (fDepthButton)
+    if (fDepthButton) {
         if (decors & fdDepth)
             fDepthButton->show();
         else
             fDepthButton->hide();
+    }
 
 #ifdef CONFIG_LOOK_PIXMAP
     const int pi(focused() ? 1 : 0);
@@ -712,5 +734,7 @@ int YFrameWindow::titleY() const {
 }
 
 int YFrameWindow::titleYN() const {
+    if (hideTitleBarWhenMaximized && isMaximized())
+        return 0;
     return (frameDecors() & fdTitleBar) ? wsTitleBar : 0;
 }

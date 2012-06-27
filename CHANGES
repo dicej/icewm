@@ -1,3 +1,133 @@
+stable:
+
+1.3.7: 2010-10-31
+	- fix crash with "Cascade"
+	- fix crash when dragging Task bar app icons
+
+1.3.7pre2: 2010-04-28
+	- winoption: appTakesFocus - for apps that actually use globally active input
+
+1.3.7pre1: 2010-04-27
+	- battery status as graphics not text (Alexander Drozdov)
+	- 'icewm-set-gnomewm' script to set GNOME window manager to icewm
+
+1.3.6:
+	- build fixes
+
+1.3.6pre3: 2010-01-05
+	- bug fixes (task bar auto hide)
+	
+1.3.6pre2: 2010-01-04
+	- bug fixes
+
+1.3.6pre1: 2010-01-03
+	- new setting: HideTitleBarWhenMaximized
+	- bug fixes
+
+1.3.5
+	- merged changes up to 1.2.38pre2
+	- fix possible crash when loading application icons (Eduard Bloch)
+	- rpm .spec file updates
+        
+1.3.4pre2: 2009-04-13:
+	- option XRRPrimaryScreenName - xrandr output name for primary screen (with taskbar)
+	- XRRDisable - option to disable use of XRANDR
+
+1.3.4pre1: 2009-01-25
+	- xrandr screen configuration support (replaces xinerama)
+	- per-screen work area
+	- merged changes up to 1.2.37
+
+1.3.3:
+	- merged changes up to 1.2.36
+	- add FocusRequestFlashInterval (0 = disable)
+
+1.3.2:
+	- merged changes up to 1.2.34
+
+1.3.1:
+	- merged changes up to 1.2.32
+	- handle all NET_WM_ICON app properties (Thomas Holder)
+	- display memory/swap/temperature/frequency information in the
+          CPU applet (Eugeny Vdovin)
+	- warp the mouse pointer on mouse triggered workspace 
+          switch (Owen Marshall)
+	- show window preview for workspaces in taskbar (Thomas Holder)
+
+1.3.0:
+	- merged changes up to 1.2.30
+	- NET_WM_ICON support
+	- gdk_pixbuf_xlib now used as image library
+
+old:
+
+1.2.38pre2:
+	- various bug fixes
+
+1.2.38pre1: 
+	- xinerama fixes
+        - app-group transient window implementation 
+	- FreeBSD ACPI support - Alexander Motin (amotin)
+
+1.2.37:
+	- fix centering of transient windows over parents (Bert Wesarg)
+	- check if window is allowed to be moved, before starting movement (Bert Wesarg)
+	- fix key handling on buttons
+
+1.2.36:
+	- add option TaskBarFullscreenAutoShow (default = 1)
+
+1.2.36pre2: 2008-08-17
+	- regrab keyboard bindings when keyboard mapping changes
+
+1.2.36pre1: 2008-08-07
+	- fix unresponsive taskbar when PassFirstClickToClient=0
+	- add support for sysfs interface (instead of proc) for battery 
+          status (initial code by Santiago Garcia Mantinan)
+	- fix maximized window repositioning on fullscreen toggle
+	- bug 1852567 - make searching for icons more consistent (iconPath first, 
+          search each directory first for all possible types - xpm, png)
+	- Italian translation update
+	- Korean translation update
+	- translation cleanup: converted .po files to UTF-8
+
+1.2.35: 2008-01-05
+	- Application tray bug fixes
+        - Add encoding/language to about dialog
+
+1.2.34: 2007-12-27
+	- fix gmplayer switching to fullscreen
+	- popup dialog focus fixes
+	- fix screen change with xrandr 1.2
+
+1.2.33: 2007-11-04
+	- build fixes (Bert Wesarg)
+	- fix FocusOnRaise
+	- tray fixes
+	- fix taskbar popup in fullscreen mode
+
+1.2.32: 2007-08-07
+	- fix session shutdown when logging out (Stanislav Maslovski)
+	- tweaks to taskbar auto-hide in fullscreen mode
+
+1.2.31: 2007-07-27
+	- auto-hide like taskbar activation in full screen mode
+	- fix raise/lower of windows of java6 apps
+	- fix iconic app startup
+
+1.2.31pre1: 2007-05-20
+	- fix crash when using battery status applet without ACPI (flitsch)
+	- fix CPU status applet with long uptime
+	- zh_CN translation update (LI Daobing)
+	- zh_TW translation update (Wei-Lun Chao)
+	- added missing ShowSettingsMenu and ShowFocusModeMenu 
+          settings (Evgenii Terechkov)
+	- Czech translation update
+	- cross compilation fix (Lucas Correia Villa Real)
+	- fix --enable-lite + --enable-gradients (Lucas Correia Villa Real)
+	- binding to raise window with mouse (MouseWinRaise=Ctrl+Alt+Mouse1)  (Thomas Holder)
+        - Russian translation update (Evgenii Terechkov)
+
 1.2.30: 2006-12-24
 	- battery status cleanups
 	- new option BatteryPollingPeriod (default 10 seconds)

@@ -1,6 +1,6 @@
 # This is an example for IceWM's window options file.
 #
-# Place your variants in /etc/icewm or in $HOME/.icewm
+# Place your variants in /usr/local/icewm/etc/icewm or in $HOME/.icewm
 # since modifications to this file will be discarded when you
 # (re)install icewm.
 
@@ -10,6 +10,7 @@ nxterm.icon: xterm
 fte.icon: fte
 emacs.Emacs.icon: emacs
 AWTapp.icon: java
+# workaround for XV window repositioning problems
 xv.nonICCCMconfigureRequest: 1
 xeyes.ignoreWinList: 0
 xeyes.ignoreTaskBar: 1

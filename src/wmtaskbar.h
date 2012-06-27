@@ -24,15 +24,42 @@ class TrayPane;
 class WorkspacesPane;
 class YXTray;
 
+class IAppletContainer {
+public:
+    virtual void relayout() = 0;
+    virtual void contextMenu(int x_root, int y_root) = 0;
+protected:
+    virtual ~IAppletContainer() {}
+};
+
 #ifdef CONFIG_TASKBAR
 class TaskBar;
 
+class EdgeTrigger: public YWindow, public YTimerListener {
+public:
+    EdgeTrigger(TaskBar *owner);
+    virtual ~EdgeTrigger();
+
+    void startHide();
+    void stopHide();
+
+    virtual void handleDNDEnter();
+    virtual void handleDNDLeave();
+
+    virtual void handleCrossing(const XCrossingEvent &crossing);
+    virtual bool handleTimer(YTimer *t);
+private:
+    TaskBar *fTaskBar;
+    YTimer *fAutoHideTimer;
+    bool fDoShow;
+};
+
 class TaskBar:
     public YFrameClient,
-    public YTimerListener,
     public YActionListener,
     public YPopDownListener,
-    public YXTrayNotifier
+    public YXTrayNotifier,
+    public IAppletContainer
 {
 public:
     TaskBar(YWindow *aParent);
@@ -46,7 +73,9 @@ public:
     virtual void handleEndDrag(const XButtonEvent &down, const XButtonEvent &up);
 
     virtual void handleCrossing(const XCrossingEvent &crossing);
+#if false
     virtual bool handleTimer(YTimer *t);
+#endif
 
     virtual void actionPerformed(YAction *action, unsigned int modifiers);
     virtual void handlePopDown(YPopupWindow *popup);
@@ -54,31 +83,37 @@ public:
 
     void updateWMHints();
     void updateLocation();
-    void configure(const YRect &r, const bool resized);
+    void configure(const YRect &r);
 
 #ifdef CONFIG_APPLET_CLOCK
     YClock *clock() { return fClock; }
 #endif
+
+    bool windowTrayRequestDock(Window w);
+    void setWorkspaceActive(long workspace, int active);
+
+    void removeTasksApp(YFrameWindow *w);
+    class TaskBarApp *addTasksApp(YFrameWindow *w);
+    void relayoutTasks();
 
     WorkspacesPane *workspacesPane() const { return fWorkspaces; }
 
     void popupStartMenu();
     void popupWindowListMenu();
 
-    virtual void handleDNDEnter();
-    virtual void handleDNDLeave();
     void popOut();
+    void showAddressBar();
     void showBar(bool visible);
     void handleCollapseButton();
 
     AddressBar *addressBar() const { return fAddressBar; }
     TaskPane *taskPane() const { return fTasks; }
 #ifdef CONFIG_TRAY
-    TrayPane *trayPane() const { return fTray; }
+    TrayPane *windowTrayPane() const { return fWindowTray; }
 #endif
 
 #ifdef CONFIG_GRADIENTS
-    virtual ref<YPixbuf> getGradient() const { return fGradient; }
+    virtual ref<YImage> getGradient() const { return fGradient; }
 #endif    
 
     void contextMenu(int x_root, int y_root);
@@ -86,16 +121,24 @@ public:
     void relayout() { fNeedRelayout = true; }
     void relayoutNow();
 
-    void detachTray();
+    void detachDesktopTray();
     void trayChanged();
-    YXTray *netwmTray() { return fTray2; }
+    YXTray *netwmTray() { return fDesktopTray; }
+
+    void relayoutTray();
+    class TrayApp *addTrayApp(YFrameWindow *w);
+    void removeTrayApp(YFrameWindow *w);
+
+    bool autoTimer(bool show);
+    void updateFullscreen(bool fullscreen);
+    Window edgeTriggerWindow() { return fEdgeTrigger->handle(); }
 
 private:
     TaskPane *fTasks;
 
     YButton *fCollapseButton;
 #ifdef CONFIG_TRAY
-    TrayPane *fTray;
+    TrayPane *fWindowTray;
 #endif
 #ifdef CONFIG_APPLET_CLOCK
     YClock *fClock;
@@ -123,13 +166,16 @@ private:
     YButton *fShowDesktop;
     AddressBar *fAddressBar;
     WorkspacesPane *fWorkspaces;
-    YXTray *fTray2;
+    YXTray *fDesktopTray;
 
     bool fIsHidden;
+    bool fFullscreen;
     bool fIsCollapsed;
     bool fIsMapped;
     bool fMenuShown;
+#if false
     YTimer *fAutoHideTimer;
+#endif
 
     YMenu *taskBarMenu;
 
@@ -137,7 +183,7 @@ private:
     friend class WindowListBox;
     
 #ifdef CONFIG_GRADIENTS
-    ref<YPixbuf> fGradient;
+    ref<YImage> fGradient;
 #endif
 
     bool fNeedRelayout;
@@ -145,6 +191,8 @@ private:
     void initMenu();
     void initApplets();
     void updateLayout(int &size_w, int &size_h);
+
+    EdgeTrigger *fEdgeTrigger;
 };
 
 extern TaskBar *taskBar; // !!! get rid of this
@@ -160,14 +208,12 @@ extern ref<YPixmap> taskbuttonminimizedPixmap;
 #endif
 
 #ifdef CONFIG_GRADIENTS
-#if 1
 class YPixbuf;
 
-extern ref<YPixbuf> taskbackPixbuf;
-extern ref<YPixbuf> taskbuttonPixbuf;
-extern ref<YPixbuf> taskbuttonactivePixbuf;
-extern ref<YPixbuf> taskbuttonminimizedPixbuf;
-#endif
+extern ref<YImage> taskbackPixbuf;
+extern ref<YImage> taskbuttonPixbuf;
+extern ref<YImage> taskbuttonactivePixbuf;
+extern ref<YImage> taskbuttonminimizedPixbuf;
 #endif
 
 #endif

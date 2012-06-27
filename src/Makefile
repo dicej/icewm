@@ -1,17 +1,18 @@
-PACKAGE = icewm
-VERSION = 1.2.30
-HOSTOS  = Linux 2.6.11-9-amd64-k8
+VERSION = 1.3.7
+HOSTOS  = Linux 3.2.0-2-amd64
 HOSTCPU = x86_64
 
 LIBDIR = /usr/local/icewm/share/icewm
-CFGDIR = /etc/icewm
+CFGDIR = /usr/local/icewm/etc/icewm
 LOCDIR = /usr/local/icewm/share/locale
 DOCDIR = /usr/local/icewm/share/doc
 
 ################################################################################
 
 CXX =           g++
+HOSTCXX =       g++
 LD =            g++
+HOSTLD =        g++
 EXEEXT =        
 
 DEBUG =         
@@ -33,13 +34,13 @@ DEFS =          -DHAVE_CONFIG_H \
                 -DICEHELPEXE='"icehelp$(EXEEXT)"' \
                 -DICEHELPIDX='"$(DOCDIR)/icewm-$(VERSION)/icewm.html"'
 
-CXXFLAGS =      -fpermissive -Wall -Wpointer-arith -Wconversion -Wwrite-strings -Winline -Woverloaded-virtual -W -fno-exceptions -fno-rtti -g -O2 $(DEBUG) $(DEFS) \
-	         -I/usr/X11R6/include -I/usr/include -I/usr/include/freetype2 -I/usr/X11R6/include   # `fc-config --cflags`
-LFLAGS =	
-LIBS =          
+CXXFLAGS =      -fpermissive -Wall -Wpointer-arith -Wwrite-strings -Woverloaded-virtual -W -fno-exceptions -fno-rtti -g -O2 $(DEBUG) $(DEFS) `pkg-config gdk-pixbuf-xlib-2.0 --cflags` \
+	         -I/usr/include/freetype2     # `fc-config --cflags`
+LFLAGS =	 
+LIBS =           `pkg-config gdk-pixbuf-xlib-2.0 --libs` 
 
-CORE_LIBS =      -lSM -lICE  -lX11  -L/usr/X11R6/lib  -lXrandr -lXrender -lXext -lXft -lX11 -lfreetype -lz -lfontconfig -L/usr/X11R6/lib -lXrender -lX11 # `fc-config --libs`
-IMAGE_LIBS =    -L/usr/lib -lImlib -ljpeg -ltiff -lungif -lpng -lz -lm -lXext -L/usr/X11R6/lib -lSM -lICE -lXext -lX11
+CORE_LIBS =      -lSM -lICE  -lX11   -lXrandr -lXrender -lXext -lfreetype -lXft   # `fc-config --libs`
+IMAGE_LIBS =    
 AUDIO_LIBS =    
 GNOME1_LIBS =    
 GNOME2_LIBS =    
@@ -47,18 +48,24 @@ GNOME2_LIBS =
 ################################################################################
 
 libice_OBJS = ref.o \
+        mstring.o \
+	upath.o \
         yapp.o yxapp.o ytimer.o ywindow.o ypaint.o ypopup.o \
+        yworker.o \
         misc.o ycursor.o ysocket.o \
         ypaths.o ypixbuf.o ylocale.o yarray.o ypipereader.o \
         yxembed.o yconfig.o yprefs.o \
         yfont.o yfontcore.o yfontxft.o \
+        ypixmap.o \
 	yimage.o \
-        ytooltip.o  # FIXME
+        yimage_gdk.o yimage_imlib.o yimage_xpm.o \
+        ytooltip.o # FIXME
         
 libitk_OBJS = \
 	ymenu.o ylabel.o yscrollview.o \
         ymenuitem.o yscrollbar.o ybutton.o ylistbox.o yinput.o \
-        wmconfig.o yicon.o # FIXME
+        yicon.o \
+        wmconfig.o # FIXME
 
 genpref_OBJS = \
 	genpref.o
@@ -176,10 +183,6 @@ testmap_LIBS = \
 
 testlocale_OBJS = \
 	testlocale.o ylocale.o misc.o
-testdesktop_OBJS = \
-	testdesktop.o ydesktop.o yparser.o ylocale.o misc.o
-testdesktop_LIBS = \
-	$(CORE_LIBS) $(IMAGE_LIBS)
 testarray_OBJS = \
 	testarray.o yarray.o misc.o
 
@@ -188,37 +191,44 @@ testarray_OBJS = \
 APPLICATIONS = icewm icewm-session icesh icewmhint icewmbg icewmtray icehelp
 TESTCASES = testarray testdesktop testlocale testmap testmenus testnetwmhints testwinhints iceview icesame iceicon icerun icelist
 OBJECTS =  $(icewm_OBJS) $(icewm-session_OBJS) $(icesh_OBJS) $(icewmhint_OBJS) $(icewmbg_OBJS) $(icewmtray_OBJS) $(icehelp_OBJS)  $(testarray_OBJS) $(testdesktop_OBJS) $(testlocale_OBJS) $(testmap_OBJS) $(testmenus_OBJS) $(testnetwmhints_OBJS) $(testwinhints_OBJS) $(iceview_OBJS) $(icesame_OBJS) $(iceicon_OBJS) $(icerun_OBJS) $(icelist_OBJS)
-BINARIES =  icewm icewm-session icesh icewmhint icewmbg icewmtray icehelp  testarray testdesktop testlocale testmap testmenus testnetwmhints testwinhints iceview icesame iceicon icerun icelist
+BINARIES =  icewm$(EXEEXT) icewm-session$(EXEEXT) icesh$(EXEEXT) icewmhint$(EXEEXT) icewmbg$(EXEEXT) icewmtray$(EXEEXT) icehelp$(EXEEXT)  testarray$(EXEEXT) testdesktop$(EXEEXT) testlocale$(EXEEXT) testmap$(EXEEXT) testmenus$(EXEEXT) testnetwmhints$(EXEEXT) testwinhints$(EXEEXT) iceview$(EXEEXT) icesame$(EXEEXT) iceicon$(EXEEXT) icerun$(EXEEXT) icelist$(EXEEXT)
 
 ################################################################################
 
-all: base
-base:  icewm icewm-session icesh icewmhint icewmbg icewmtray icehelp genpref ../lib/preferences
-tests:  testarray testdesktop testlocale testmap testmenus testnetwmhints testwinhints iceview icesame iceicon icerun icelist
+all:	base
+base:	 icewm$(EXEEXT) icewm-session$(EXEEXT) icesh$(EXEEXT) icewmhint$(EXEEXT) icewmbg$(EXEEXT) icewmtray$(EXEEXT) icehelp$(EXEEXT) genpref$(EXEEXT) ../lib/preferences
+tests:	 testarray$(EXEEXT) testdesktop$(EXEEXT) testlocale$(EXEEXT) testmap$(EXEEXT) testmenus$(EXEEXT) testnetwmhints$(EXEEXT) testwinhints$(EXEEXT) iceview$(EXEEXT) icesame$(EXEEXT) iceicon$(EXEEXT) icerun$(EXEEXT) icelist$(EXEEXT)
 clean:
-	rm -f genpref$(EXEEXT) *.o *.d *~
-	for bin in $(BINARIES) ; do rm -f $$bin$(EXEEXT) ; done
+	rm -f $(BINARIES) genpref$(EXEEXT) *.o *.d *~
 
 .PHONY: all base tests clean
 
 ################################################################################
 
 %.o: %.cc
-	@echo "  CXX   " $@
+	@echo "  CXX     " $@
 	@$(CXX) $(CXXFLAGS) $(GCCDEP) -c $<
+
+$(BINARIES):
+	@echo "  LD      " $@
+	@$(LD) -o $@ $($(@:$(EXEEXT)=)_OBJS) $(LFLAGS) $($(@:$(EXEEXT)=)_LFLAGS) $(LIBS) $($(@:$(EXEEXT)=)_LIBS)
+
+genpref.o: genpref.cc
+	@echo "  HOSTCXX " $@
+	@$(HOSTCXX) $(CXXFLAGS) $(GCCDEP) -c $<
 	
-genpref $(BINARIES):
-	@echo "  LD    " $@
-	@$(LD) -o $@$(EXEEXT) $($@_OBJS) $(LFLAGS) $($@_LFLAGS) $(LIBS) $($@_LIBS)
+genpref$(EXEEXT):
+	@echo "  HOSTLD  " $@
+	@$(HOSTLD) -o $@ $(genpref_OBJS)
 
 ################################################################################
 
 gnome.o: gnome.cc
-	@echo "  CXX   " $@
+	@echo "  CXX     " $@
 	@$(CXX) $(CXXFLAGS)   $(GCCDEP) -c $<
 
 gnome2.o: gnome2.cc
-	@echo "  CXX   " $@
+	@echo "  CXX     " $@
 	@$(CXX) $(CXXFLAGS)   $(GCCDEP) -c $<
 
 ################################################################################
@@ -229,37 +239,38 @@ gnome2.o: gnome2.cc
 
 wmabout.o: ../VERSION
 
-../lib/preferences: genpref
-	./genpref$(EXEEXT) >../lib/preferences
+../lib/preferences: genpref$(EXEEXT)
+	@echo "  GENPREF " $@
+	@./genpref$(EXEEXT) >../lib/preferences
 
-genpref: $(genpref_OBJS)
+genpref$(EXEEXT): $(genpref_OBJS)
 
 ################################################################################
 
-check: 	all tests
-	./icewm --help >/dev/null	
-	./testarray
-	./testlocale
+check:	all tests
+	./icewm$(EXEEXT) --help >/dev/null
+	./testarray$(EXEEXT)
+	./testlocale$(EXEEXT)
 
 ################################################################################
 #END
 
-icewm: $(icewm_OBJS)
-icewm-session: $(icewm-session_OBJS)
-icesh: $(icesh_OBJS)
-icewmhint: $(icewmhint_OBJS)
-icewmbg: $(icewmbg_OBJS)
-icewmtray: $(icewmtray_OBJS)
-icehelp: $(icehelp_OBJS)
-testarray: $(testarray_OBJS)
-testdesktop: $(testdesktop_OBJS)
-testlocale: $(testlocale_OBJS)
-testmap: $(testmap_OBJS)
-testmenus: $(testmenus_OBJS)
-testnetwmhints: $(testnetwmhints_OBJS)
-testwinhints: $(testwinhints_OBJS)
-iceview: $(iceview_OBJS)
-icesame: $(icesame_OBJS)
-iceicon: $(iceicon_OBJS)
-icerun: $(icerun_OBJS)
-icelist: $(icelist_OBJS)
+icewm$(EXEEXT): $(icewm_OBJS)
+icewm-session$(EXEEXT): $(icewm-session_OBJS)
+icesh$(EXEEXT): $(icesh_OBJS)
+icewmhint$(EXEEXT): $(icewmhint_OBJS)
+icewmbg$(EXEEXT): $(icewmbg_OBJS)
+icewmtray$(EXEEXT): $(icewmtray_OBJS)
+icehelp$(EXEEXT): $(icehelp_OBJS)
+testarray$(EXEEXT): $(testarray_OBJS)
+testdesktop$(EXEEXT): $(testdesktop_OBJS)
+testlocale$(EXEEXT): $(testlocale_OBJS)
+testmap$(EXEEXT): $(testmap_OBJS)
+testmenus$(EXEEXT): $(testmenus_OBJS)
+testnetwmhints$(EXEEXT): $(testnetwmhints_OBJS)
+testwinhints$(EXEEXT): $(testwinhints_OBJS)
+iceview$(EXEEXT): $(iceview_OBJS)
+icesame$(EXEEXT): $(icesame_OBJS)
+iceicon$(EXEEXT): $(iceicon_OBJS)
+icerun$(EXEEXT): $(icerun_OBJS)
+icelist$(EXEEXT): $(icelist_OBJS)

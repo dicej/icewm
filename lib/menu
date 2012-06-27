@@ -1,6 +1,6 @@
 # This is an example for IceWM's menu definition file.
 #
-# Place your variants in /etc/icewm or in $HOME/.icewm
+# Place your variants in /usr/local/icewm/etc/icewm or in $HOME/.icewm
 # since modifications to this file will be discarded when you
 # (re)install icewm.
 #
@@ -14,6 +14,6 @@ prog Gimp gimp gimp
 separator
 menuprog Gnome folder icewm-menu-gnome1 --list 
 menuprog Gnome folder icewm-menu-gnome2 --list 
-menuprog KDE folder icewm-menu-gnome --list /usr/share/applnk/
+menuprog KDE folder icewm-menu-gnome --list 
 menufile Programs folder programs
 menufile Tool_bar folder toolbar

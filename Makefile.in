@@ -18,7 +18,8 @@ LOCDIR = @LOCDIR@
 KDEDIR = @KDEDIR@
 DOCDIR = @DOCDIR@
 MANDIR = @MANDIR@
-GWMDIR = @GWMDIR@
+
+EXEEXT = @EXEEXT@
 
 INSTALL    = @INSTALL@
 INSTALLDIR = @INSTALLDIR@
@@ -32,7 +33,7 @@ DESTDIR     =
 
 ################################################################################
 
-BINFILES    = @BINFILES@
+BINFILES    = @BINFILES@ icewm-set-gnomewm
 LIBFILES    = lib/preferences lib/winoptions lib/keys \
               lib/menu lib/toolbar # lib/programs
 DOCFILES    = README BUGS CHANGES COPYING AUTHORS INSTALL VERSION icewm.lsm
@@ -40,8 +41,6 @@ MANFILES    = icewm.1
 XPMDIRS     = icons ledclock taskbar mailbox cursors
 THEMES      = nice motif win95 warp3 warp4 metal2 gtk2 Infadel2 nice2 \
               icedesert yellowmotif
-
-GNOMEFILES  = lib/IceWM.desktop
 
 all:		@TARGETS@
 install:	@TARGETS_INSTALL@
@@ -54,8 +53,6 @@ docs:
 
 nls:
 	@cd po; $(MAKE) all
-
-gnome:
 
 srcclean:
 	@cd src; $(MAKE) clean
@@ -133,13 +130,15 @@ install-nls: nls
 	@echo ------------------------------------------
 
 install-man:
+	@$(INSTALLDIR) "$(DESTDIR)$(MANDIR)/man1"
 	@for man in $(MANFILES); do \
 		$(INSTALLMAN) doc/$$man.man $(DESTDIR)$(MANDIR)/man1/$$man; \
 	done
 
-install-gnome: gnome
+install-desktop:
 	@echo ------------------------------------------
-	@echo Installing icewm-gnome in $(DESTDIR)$(GWMDIR)
-	@$(INSTALLDIR) "$(DESTDIR)$(GWMDIR)"
-	@$(INSTALLLIB) "$(top_srcdir)/lib/IceWM.desktop" "$(DESTDIR)$(GWMDIR)"
+	@$(INSTALLDIR) "$(DESTDIR)/usr/share/xsessions"
+	@$(INSTALLDIR) "$(DESTDIR)/usr/share/applications"
+	@$(INSTALLLIB) "$(top_srcdir)/lib/icewm-session.desktop" "$(DESTDIR)/usr/share/xsessions/icewm-session.desktop"
+	@$(INSTALLLIB) "$(top_srcdir)/lib/icewm.desktop" "$(DESTDIR)/usr/share/applications/icewm.desktop"
 	@echo ------------------------------------------

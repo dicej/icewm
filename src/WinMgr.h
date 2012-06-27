@@ -128,7 +128,7 @@
  * this where WIN_WORKSPACE_COUNT comes into play.
  */
 
-#define WinWorkspaceInvalid    0xFFFFFFFFL
+#define WinWorkspaceInvalid    (-1L)
 
 /* workspaces */
 #define XA_WIN_WORKSPACES "_WIN_WORKSPACES"
@@ -199,6 +199,7 @@
 #define WinLayerAboveDock      10L
 #define WinLayerMenu           12L
 #define WinLayerFullscreen     14L // hack, for now
+#define WinLayerAboveAll       15L // for taskbar auto hide
 
 /* task bar tray */
 #define XA_WIN_TRAY             "_ICEWM_TRAY"

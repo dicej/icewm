@@ -6,8 +6,8 @@
 /************************************************************************************************************************************************************/
 XIV(int, focusMode,                             1)
 XIV(bool, clickFocus,                           true)
-XIV(bool, focusOnAppRaise,                      false) 
-XIV(bool, requestFocusOnAppRaise,               true) 
+XIV(bool, focusOnAppRaise,                      false)
+XIV(bool, requestFocusOnAppRaise,               true)
 XIV(bool, raiseOnFocus,                         true)
 XIV(bool, focusOnClickClient,                   true)
 XIV(bool, raiseOnClickClient,                   true)
@@ -28,8 +28,10 @@ XIV(bool, showMoveSizeStatus,                   true)
 XIV(bool, workspaceSwitchStatus,                true)
 XIV(bool, beepOnNewMail,                        false)
 XIV(bool, warpPointer,                          false)
+XIV(bool, warpPointerOnEdgeSwitch,              false)
 XIV(bool, opaqueMove,                           true)
 XIV(bool, opaqueResize,                         true)
+XIV(bool, hideTitleBarWhenMaximized,            false)
 XSV(const char *, winMenuItems,                 "rmsnxfhualyticw")
 #ifdef CONFIG_TASKBAR
 XIV(bool, showTaskBar,                          true)
@@ -38,6 +40,7 @@ XIV(bool, taskBarKeepBelow,                     false)
 XIV(bool, taskBarShowClock,                     true)
 XIV(bool, taskBarShowApm,                       false)
 XIV(bool, taskBarShowApmTime,                   true) // mschy
+XIV(bool, taskBarShowApmGraph,                  true) // hatred
 XIV(bool, taskBarShowMailboxStatus,             true)
 XIV(bool, taskBarShowStartMenu,                 true)
 XIV(bool, taskBarShowWindowListMenu,            true)
@@ -50,13 +53,23 @@ XIV(int, taskBarButtonWidthDivisor,             3)
 XIV(bool, taskBarShowTray,                      true)
 XIV(bool, trayShowAllWindows,                   true)
 #endif
-XIV(bool, taskBarShowTransientWindows,          false)
+XIV(bool, taskBarShowTransientWindows,          true)
 XIV(bool, taskBarShowAllWindows,                false)
 XIV(bool, taskBarShowWindowIcons,               true)
 XIV(bool, taskBarAutoHide,                      false)
+XIV(bool, taskBarFullscreenAutoShow,            true)
 XIV(bool, taskBarDoubleHeight,                  false)
 XIV(bool, taskBarWorkspacesLeft,                true)
+XIV(bool, pagerShowPreview,                     false)
+XIV(bool, pagerShowWindowIcons,                 true)
+XIV(bool, pagerShowMinimized,                   true)
+XIV(bool, pagerShowBorders,                     true)
+XIV(bool, pagerShowNumbers,                     true)
 XIV(bool, taskBarShowCPUStatus,                 true)
+XIV(bool, cpustatusShowRamUsage,                true)
+XIV(bool, cpustatusShowSwapUsage,               true)
+XIV(bool, cpustatusShowAcpiTemp,                true)
+XIV(bool, cpustatusShowCpuFreq,                 true)
 XIV(bool, taskBarShowNetStatus,                 true)
 XIV(bool, taskBarLaunchOnSingleClick,           true)
 XIV(bool, taskBarShowCollapseButton,            false)
@@ -67,6 +80,7 @@ XIV(bool, miniIconsRightToLeft,                 false)
 XIV(bool, miniIconsBottomToTop,                 false)
 XIV(bool, manualPlacement,                      false)
 XIV(bool, smartPlacement,                       true)
+XIV(bool, centerLarge,                          false)
 XIV(bool, centerTransientsOnOwner,              true)
 XIV(bool, autoRaise,                            false)
 XIV(bool, delayPointerFocus,                    true)
@@ -91,7 +105,7 @@ XIV(bool, edgeVertWorkspaceSwitching,           false)
 XIV(bool, edgeContWorkspaceSwitching,           true)
 XIV(bool, limitSize,                            true)
 XIV(bool, limitPosition,                        true)
-XIV(bool, limitByDockLayer,                     true)
+XIV(bool, limitByDockLayer,                     false)
 XIV(bool, considerHorizBorder,                  false)
 XIV(bool, considerVertBorder,                   false)
 XIV(bool, centerMaximizedWindows,               false)
@@ -136,7 +150,9 @@ XIV(int, titleRollupButton,                     2)
 XIV(int, msgBoxDefaultAction,                   0)
 XIV(int, mailCheckDelay,                        30)
 XIV(int, taskBarCPUSamples,                     20)
+XIV(int, taskBarApmGraphWidth,                  10) // hatred
 XIV(int, focusRequestFlashTime,                 0)
+XIV(int, focusRequestFlashInterval,             250)
 XIV(int, nestedThemeMenuMinNumber,              15)
 XIV(int, batteryPollingPeriod,                  10)
 
@@ -195,7 +211,7 @@ cfoption icewm_preferences[] = {
     OBV("FocusOnMap",                           &focusOnMap,                    "Focus normal window when initially mapped"),
     OBV("FocusOnMapTransient",                  &focusOnMapTransient,           "Focus dialog window when initially mapped"),
     OBV("FocusOnMapTransientActive",            &focusOnMapTransientActive,     "Focus dialog window when initially mapped only if parent frame focused"),
-    OBV("MapInactiveOnTop",                     &mapInactiveOnTop,     "Put new windows on top even if not focusing them"),
+    OBV("MapInactiveOnTop",                     &mapInactiveOnTop,              "Put new windows on top even if not focusing them"),
     OBV("PointerColormap",                      &pointerColormap,               "Colormap focus follows pointer"),
     OBV("DontRotateMenuPointer",                &dontRotateMenuPointer,         "Don't rotate the cursor for popup menus"),
     OBV("LimitSize",                            &limitSize,                     "Limit size of windows to screen"),
@@ -219,6 +235,8 @@ cfoption icewm_preferences[] = {
     OBV("OpaqueResize",                         &opaqueResize,                  "Opaque window resize"),
     OBV("ManualPlacement",                      &manualPlacement,               "Windows initially placed manually by user"),
     OBV("SmartPlacement",                       &smartPlacement,                "Smart window placement (minimal overlap)"),
+    OBV("HideTitleBarWhenMaximized",            &hideTitleBarWhenMaximized,     "Hide title bar when maximized"),
+    OBV("CenterLarge",                          &centerLarge,                   "Center large windows"),
     OBV("CenterTransientsOnOwner",              &centerTransientsOnOwner,       "Center dialogs on owner window"),
     OBV("MenuMouseTracking",                    &menuMouseTracking,             "Menus track mouse even with no mouse buttons held"),
     OBV("AutoRaise",                            &autoRaise,                     "Auto raise windows after delay"),
@@ -252,9 +270,11 @@ cfoption icewm_preferences[] = {
     OBV("TaskBarAtTop",                         &taskBarAtTop,                  "Task bar at top of the screen"),
     OBV("TaskBarKeepBelow",                     &taskBarKeepBelow,              "Keep the task bar below regular windows"),
     OBV("TaskBarAutoHide",                      &taskBarAutoHide,               "Auto hide task bar after delay"),
+    OBV("TaskBarFullscreenAutoShow",            &taskBarFullscreenAutoShow,     "Auto show task bar when fullscreen window active"),
     OBV("TaskBarShowClock",                     &taskBarShowClock,              "Show clock on task bar"),
     OBV("TaskBarShowAPMStatus",                 &taskBarShowApm,                "Show APM/ACPI/Battery/Power status monitor on task bar"),
     OBV("TaskBarShowAPMTime",                   &taskBarShowApmTime,            "Show APM status on task bar in time-format"),  // mschy
+    OBV("TaskBarShowAPMGraph",                  &taskBarShowApmGraph,           "Show APM status in graph mode"), // hatred
     OBV("TaskBarShowMailboxStatus",             &taskBarShowMailboxStatus,      "Show mailbox status on task bar"),
     OBV("TaskBarMailboxStatusBeepOnNewMail",    &beepOnNewMail,                 "Beep when new mail arrives"),
     OBV("TaskBarMailboxStatusCountMessages",    &countMailMessages,             "Count messages in mailbox"),
@@ -271,16 +291,27 @@ cfoption icewm_preferences[] = {
     OBV("TaskBarShowWindowIcons",               &taskBarShowWindowIcons,        "Show icons of windows on the task bar"),
     OBV("TaskBarShowStartMenu",                 &taskBarShowStartMenu,          "Show 'Start' menu on task bar"),
     OBV("TaskBarShowWindowListMenu",            &taskBarShowWindowListMenu,     "Show 'window list' menu on task bar"),
-    OBV("TaskBarShowCPUStatus",                 &taskBarShowCPUStatus,          "Show CPU status on task bar (Linux             & Solaris)"),
+    OBV("TaskBarShowCPUStatus",                 &taskBarShowCPUStatus,          "Show CPU status on task bar (Linux & Solaris)"),
+    OBV("CPUStatusShowRamUsage",                &cpustatusShowRamUsage,         "Show RAM usage in CPU status tool tip"),
+    OBV("CPUStatusShowSwapUsage",               &cpustatusShowSwapUsage,        "Show swap usage in CPU status tool tip"),
+    OBV("CPUStatusShowAcpiTemp",                &cpustatusShowAcpiTemp,         "Show ACPI temperature in CPU status tool tip"),
+    OBV("CPUStatusShowCpuFreq",                 &cpustatusShowCpuFreq,          "Show CPU frequency in CPU status tool tip"),
     OBV("TaskBarShowNetStatus",                 &taskBarShowNetStatus,          "Show network status on task bar (Linux only)"),
     OBV("TaskBarShowCollapseButton",            &taskBarShowCollapseButton,     "Show a button to collapse the taskbar"),
     OBV("TaskBarDoubleHeight",                  &taskBarDoubleHeight,           "Use double-height task bar"),
     OBV("TaskBarWorkspacesLeft",                &taskBarWorkspacesLeft,         "Place workspace pager on left, not right"),
+    OBV("PagerShowPreview",                     &pagerShowPreview,              "Show a mini desktop preview on each workspace button"),
+    OBV("PagerShowWindowIcons",                 &pagerShowWindowIcons,          "Draw window icons inside large enough preview windows on pager (if PagerShowPreview=1)"),
+    OBV("PagerShowMinimized",                   &pagerShowMinimized,            "Draw even minimized windows as unfilled rectangles (if PagerShowPreview=1)"),
+    OBV("PagerShowBorders",                     &pagerShowBorders,              "Draw border around workspace buttons (if PagerShowPreview=1)"),
+    OBV("PagerShowNumbers",                     &pagerShowNumbers,              "Show number of workspace on workspace button (if PagerShowPreview=1)"),
     OBV("TaskBarLaunchOnSingleClick",           &taskBarLaunchOnSingleClick,    "Execute taskbar applet commands (like MailCommand,     ClockCommand,   ...) on single click"),
 #endif
 //    OBV("WarpPointer",                          &warpPointer,                   "Move mouse when doing focusing in pointer focus mode"),
     OBV("ClientWindowMouseActions",             &clientMouseActions,            "Allow mouse actions on client windows (buggy with some programs)"),
     OBV("ShowProgramsMenu",                     &showPrograms,                  "Show programs submenu"),
+    OBV("ShowSettingsMenu",                     &showSettingsMenu,                  "Show settings submenu"),
+    OBV("ShowFocusModeMenu",                     &showFocusModeMenu,                  "Show focus mode submenu"),
     OBV("ShowThemesMenu",                       &showThemesMenu,                "Show themes submenu"),
     OBV("ShowLogoutMenu",                       &showLogoutMenu,                "Show logout submenu"),
     OBV("ShowHelp",                             &showHelp,                      "Show the help menu item"),
@@ -289,9 +320,6 @@ cfoption icewm_preferences[] = {
     OBV("ShowRun",                              &showRun,                       "Show the run menu item"),
     OBV("ShowWindowList",                       &showWindowList,                "Show the window menu item"),
     OBV("AllowFullscreen",                      &allowFullscreen,               "Allow to switch a window to fullscreen"),
-#ifdef CONFIG_IMLIB
-    OBV("DisableImlibCaches",                   &disableImlibCaches,            "Disable Imlib's image/pixmap caches"),
-#endif
     OBV("EnableAddressBar",                     &enableAddressBar,              "Enable address bar functionality in taskbar"),
     OBV("ShowAddressBar",                       &showAddressBar,                "Show address bar in task bar"),
 #ifdef CONFIG_I18N
@@ -302,6 +330,7 @@ cfoption icewm_preferences[] = {
     OBV("ShapesProtectClientWindow",            &protectClientWindow,           "Don't cut client windows by shapes set trough frame corner pixmap"),
 #endif
     OBV("DoubleBuffer",                         &doubleBuffer,                  "Use double buffering when redrawing the display"),
+    OBV("XRRDisable",                           &xrrDisable,                    "Disable use of new XRANDR API for dual head (nvidia workaround)"),
     OIV("ClickMotionDistance",                  &ClickMotionDistance, 0, 32,    "Pointer motion distance before click gets interpreted as drag"),
     OIV("ClickMotionDelay",                     &ClickMotionDelay, 0, 2000,     "Delay before click gets interpreted as drag"),
     OIV("MultiClickTime",                       &MultiClickTime, 0, 5000,       "Multiple click time"),
@@ -339,10 +368,12 @@ cfoption icewm_preferences[] = {
     OIV("TaskBarNetSamples",                    &taskBarNetSamples, 2, 1000,    "Width of Net Monitor"),
     OIV("TaskBarNetDelay",                      &taskBarNetDelay, 10, (60*60*1000),    "Delay between Net Monitor samples in ms"),
     OIV("TaskbarButtonWidthDivisor",            &taskBarButtonWidthDivisor, 1, 25, "default number of tasks in taskbar"),
+    OIV("TaskBarApmGraphWidth",                 &taskBarApmGraphWidth, 1, 1000,  "Width of APM Monitor"), // hatred
 #endif
 
     OIV("XineramaPrimaryScreen",                &xineramaPrimaryScreen, 0, 63, "Primary screen for xinerama (taskbar, ...)"),
-    OIV("FocusRequestFlashTime",                &focusRequestFlashTime, 0, (3600 * 24), "Number of seconds the taskbar app will blink when requesting focus"),
+    OIV("FocusRequestFlashTime",                &focusRequestFlashTime, 0, (3600 * 24), "Number of seconds the taskbar app will blink when requesting focus (0 = forever)"),
+    OIV("FocusRequestFlashInterval",            &focusRequestFlashInterval, 0, 30000, "Taskbar blink interval (ms) when requesting focus (0 = blinking disabled)"),
     OIV("NestedThemeMenuMinNumber",             &nestedThemeMenuMinNumber,  0, 1234,  "Minimal number of themes after which the Themes menu becomes nested (0=disabled)"),
     OIV("BatteryPollingPeriod",                 &batteryPollingPeriod, 2, 3600, "Delay between power status updates (seconds)"),
 ///    OSV("Theme",                                &themeName,                     "Theme name"),
@@ -370,6 +401,7 @@ cfoption icewm_preferences[] = {
     OSV("TimeFormat",                           &fmtTime,                       "Clock Time format (strftime format string)"),
     OSV("TimeFormatAlt",                        &fmtTimeAlt,                    "Alternate Clock Time format (e.g. for blinking effects)"),
     OSV("DateFormat",                           &fmtDate,                       "Clock Date format for tooltip (strftime format string)"),
+    OSV("XRRPrimaryScreenName",                 &xineramaPrimaryScreenName,     "screen/output name of the primary screen"),
 #ifdef CONFIG_APPLET_APM
     OSV("AcpiIgnoreBatteries",                  &acpiIgnoreBatteries,           "List of battery names (directories) in /proc/acpi/battery to ignore. Useful when more slots are built-in, but only one battery is used"),
 #endif
@@ -378,6 +410,7 @@ cfoption icewm_preferences[] = {
 #ifndef NO_KEYBIND
     OKV("MouseWinMove",                         gMouseWinMove,                  "Mouse binding for window move"),
     OKV("MouseWinSize",                         gMouseWinSize,                  "Mouse binding for window resize"),
+    OKV("MouseWinRaise",                        gMouseWinRaise,                 "Mouse binding to raise window"),
     OKV("KeyWinRaise",                          gKeyWinRaise,                   ""),
     OKV("KeyWinOccupyAll",                      gKeyWinOccupyAll,               ""),
     OKV("KeyWinLower",                          gKeyWinLower,                   ""),

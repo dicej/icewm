@@ -1,5 +1,5 @@
 
-#if defined(linux) || (defined (__FreeBSD__) && defined(i386)) || defined(__NetBSD__)
+#if defined(linux) || (defined (__FreeBSD__)) || (defined(__NetBSD__) && defined(i386))
 
 #include "ywindow.h"
 #include "ytimer.h"
@@ -20,7 +20,7 @@ typedef struct {
   char *name;
   int capacity_full;
 } bat_info;
-  
+
 
 class YApm: public YWindow, public YTimerListener {
 public:
@@ -40,15 +40,22 @@ private:
     int calcWidth(const char *s, int count);
 
     void AcpiStr(char *s, bool Tool);
+    void SysStr(char *s, bool Tool);
     void PmuStr(char *, const bool);
+    void ApmStr(char *s, bool Tool);
     int ignore_directory_bat_entry(struct dirent *de);
+    int ignore_directory_ac_entry(struct dirent *de);
 
     static YColor *apmBg;
     static YColor *apmFg;
     static ref<YFont> apmFont;
 
+    static YColor *apmColorOnLine;
+    static YColor *apmColorBattery;
+    static YColor *apmColorGraphBg;
+
     // display mode: pmu, acpi or apm info
-    enum { APM, ACPI, PMU } mode;
+    enum { APM, ACPI, PMU, SYSFS } mode;
     //number of batteries (for apm == 1)
     int batteryNum;
     //names of batteries to ignore. e.g.
@@ -60,6 +67,10 @@ private:
     //(file)name of ac adapter
     char *acpiACName;
     char *fCurrentState;
+
+    // On line status and charge persent
+    int      acIsOnLine;
+    double   chargeStatus;
 
     void updateState();
 };
