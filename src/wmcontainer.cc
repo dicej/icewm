@@ -52,6 +52,17 @@ void YClientContainer::handleButton(const XButtonEvent &button) {
                 firstClick = true;
         }
     }
+
+    if (clientMouseActions && 
+	((button.state & (ControlMask | ShiftMask | xapp->AltMask))
+	 == (ControlMask | xapp->AltMask))) {
+      XAllowEvents(xapp->display(), AsyncPointer, CurrentTime);
+      if (button.button == 1) {
+	getFrame()->wmClose(); // bwahaha
+	return;
+      }
+    }
+
 #if 1
     if (clientMouseActions) {
         unsigned int k = button.button + XK_Pointer_Button1 - 1;
@@ -104,15 +115,6 @@ void YClientContainer::handleButton(const XButtonEvent &button) {
         }
     }
 #endif
-    if (clientMouseActions && 
-	((button.state & (ControlMask | ShiftMask | xapp->AltMask))
-	 == (ControlMask | xapp->AltMask))) {
-      XAllowEvents(xapp->display(), AsyncPointer, CurrentTime);
-      if (button.button == 1) {
-	getFrame()->wmClose(); // bwahaha
-	return;
-      }
-    }
 
 //     if (doActivate)
 //         getFrame()->activate();
