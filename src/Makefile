@@ -37,9 +37,9 @@ DEFS =          -DHAVE_CONFIG_H \
 CXXFLAGS =      -fpermissive -Wall -Wpointer-arith -Wwrite-strings -Woverloaded-virtual -W -fno-exceptions -fno-rtti -g -O2 $(DEBUG) $(DEFS) `pkg-config gdk-pixbuf-xlib-2.0 --cflags` \
 	         -I/usr/include/freetype2     # `fc-config --cflags`
 LFLAGS =	 
-LIBS =           `pkg-config gdk-pixbuf-xlib-2.0 --libs` 
+LIBS =           `pkg-config gdk-pixbuf-xlib-2.0 --libs`
 
-CORE_LIBS =      -lSM -lICE  -lX11   -lXrandr -lXrender -lXext -lfreetype -lXft   # `fc-config --libs`
+CORE_LIBS =      -lSM -lICE  -lX11   -lXrandr -lXrender -lXext -lfreetype -lXft  -lfontconfig
 IMAGE_LIBS =    
 AUDIO_LIBS =    
 GNOME1_LIBS =    
