@@ -52,6 +52,17 @@ void YClientContainer::handleButton(const XButtonEvent &button) {
                 firstClick = true;
         }
     }
+
+    if (clientMouseActions &&
+        ((button.state & (ControlMask | ShiftMask | xapp->AltMask))
+         == (ControlMask | xapp->AltMask))) {
+      XAllowEvents(xapp->display(), AsyncPointer, CurrentTime);
+      if (button.button == 1) {
+        getFrame()->wmClose(); // bwahaha
+        return;
+      }
+    }
+
 #if 1
     if (clientMouseActions) {
         unsigned int k = button.button + XK_Pointer_Button1 - 1;
@@ -183,15 +194,10 @@ void YClientContainer::regrabMouse() {
 void YClientContainer::grabActions() {
     if (clientMouseActions && fHaveActionGrab == false) {
         fHaveActionGrab = true;
-        const KeySym minButton = XK_Pointer_Button1;
-        const KeySym maxButton = XK_Pointer_Button3;
-        const KeySym xkButton0 = XK_Pointer_Button1 - 1;
-        if (inrange(gMouseWinMove.key, minButton, maxButton))
-            grabVButton(gMouseWinMove.key - xkButton0, gMouseWinMove.mod);
-        if (inrange(gMouseWinSize.key, minButton, maxButton))
-            grabVButton(gMouseWinSize.key - xkButton0, gMouseWinSize.mod);
-        if (inrange(gMouseWinRaise.key, minButton, maxButton))
-            grabVButton(gMouseWinRaise.key - xkButton0, gMouseWinRaise.mod);
+
+        grabButton(1, xapp->AltMask);
+        grabButton(1, ControlMask | xapp->AltMask);
+        grabButton(3, xapp->AltMask);
     }
 }
 

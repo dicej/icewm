@@ -590,18 +590,6 @@ void YFrameTitleBar::paint(Graphics &g, const YRect &/*r*/) {
     default:
         break;
     }
-
-    if (title != null && tlen) {
-        stringOffset+= titleBarHorzOffset;
-
-        if (st) {
-            g.setColor(st);
-            g.drawStringEllipsis(stringOffset + 1, yPos + 1, title, tlen);
-        }
-
-        g.setColor(fg);
-        g.drawStringEllipsis(stringOffset, yPos, title, tlen);
-    }
 }
 
 #ifdef CONFIG_SHAPE

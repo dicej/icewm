@@ -926,6 +926,13 @@ void Graphics::drawBorderG(int x, int y, unsigned w, unsigned h, bool raised) {
     setColor(back);
 }
 
+void Graphics::drawBorderS(int x, int y, int w, int h, YColor* color) {
+    YColor* back = Graphics::color();
+    setColor(color);
+    drawRect(x, y, w, h);
+    setColor(back);
+}
+
 void Graphics::drawCenteredPixmap(int x, int y, unsigned w, unsigned h, ref<YPixmap> pixmap) {
     int r = x + w;
     int b = y + h;

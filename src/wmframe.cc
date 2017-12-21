@@ -1686,8 +1686,14 @@ void YFrameWindow::paint(Graphics &g, const YRect &/*r*/) {
             g.drawLine(0, height() - wsCornerY, width(), height() - wsCornerY);
         }
         break;
-    case lookPixmap:
     case lookMetal:
+      {
+        g.fillRect(1, 1, width() - 2, height() - 2);
+        g.drawBorderS(0, 0, width() - 1, height() - 1,
+          (fFocused? activeBorderBg : inactiveBorderBg));
+      }
+    break;
+    case lookPixmap:
     case lookFlat:
     case lookGtk:
         {
@@ -2780,7 +2786,7 @@ void YFrameWindow::updateDerivedSize(long flagmask) {
     if (isMaximizedVert()) {
         nh = Mh;
         if (considerVertBorder) {
-            nh -= 2 * borderYN();
+            nh -= (2 * borderYN()) + 2;
         }
         vert = true;
     }

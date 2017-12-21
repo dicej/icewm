@@ -192,6 +192,7 @@ public:
     void drawBorderW(int x, int y, unsigned w, unsigned h, bool raised);
     void drawBorderM(int x, int y, unsigned w, unsigned h, bool raised);
     void drawBorderG(int x, int y, unsigned w, unsigned h, bool raised);
+    void drawBorderS(int x, int y, int w, int h, YColor* color);
     void drawCenteredPixmap(int x, int y, unsigned w, unsigned h, ref<YPixmap> pixmap);
     void drawOutline(int l, int t, int r, int b, unsigned iw, unsigned ih);
     void repHorz(Drawable drawable, unsigned pw, unsigned ph, int x, int y, unsigned w);

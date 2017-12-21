@@ -272,6 +272,8 @@ void YFrameClient::constrainSize(int &w, int &h, int flags)
         if (flags & csRound) {
             w += wInc / 2;
             h += hInc / 2;
+        } else {
+            h += hInc / 4;
         }
 
         w -= max(0, w - wBase) % non_zero(wInc);

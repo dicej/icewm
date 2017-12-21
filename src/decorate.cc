@@ -300,6 +300,10 @@ void YFrameWindow::performLayout()
     layoutShape();
     if (affectsWorkArea())
         manager->updateWorkArea();
+
+#ifdef CONFIG_TASKBAR
+    updateTaskBar();
+#endif
 }
 
 void YFrameWindow::layoutTitleBar() {

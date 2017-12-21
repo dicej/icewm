@@ -82,6 +82,8 @@ private:
     TaskBarApp *fDragging;
     int fDragX;
     int fDragY;
+
+    void sort();
 };
 
 #endif

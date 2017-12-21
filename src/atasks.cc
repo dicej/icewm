@@ -171,8 +171,8 @@ void TaskBarApp::paint(Graphics &g, const YRect &/*r*/) {
                 g.drawBorderW(0, 0, width() - 1, height() - 1, true);
         }
 
-        int const dp(wmLook == lookFlat ? 0: wmLook == lookMetal ? 2 : p);
-        int const ds(wmLook == lookFlat ? 0: wmLook == lookMetal ? 4 : 3);
+        int const dp(wmLook == lookFlat ? 0: wmLook == lookMetal ? 1 : p);
+        int const ds(wmLook == lookFlat ? 0: wmLook == lookMetal ? 2 : 3);
 
         if ((int) width() > ds && (int) height() > ds) {
             if (bgGrad != null)
@@ -398,6 +398,8 @@ void TaskPane::relayoutNow() {
 
     fNeedRelayout = false;
 
+    sort();
+
     int tc = 0;
 
     for (IterType task = fApps.iterator(); ++task; ) {
@@ -410,16 +412,16 @@ void TaskPane::relayoutNow() {
         return;
     tc = max(tc, taskBarButtonWidthDivisor);
 
-    const int wid = (width() - 2) / tc;
-    const int rem = (width() - 2) % tc;
-    int x = 0;
+    const int wid = width() / tc;
+    const int rem = width() % tc;
+    int x = -2;
     int lc = 0;
 
     for (IterType task = fApps.iterator(); ++task; ) {
         if (task->getShown()) {
             const int w1 = wid + (lc < rem);
             if (task != dragging()) {
-                task->setGeometry(YRect(x, 0, w1, height()));
+                task->setGeometry(YRect(x + 2, 1, w1 - 2, height() - 1));
                 task->show();
             }
             x += w1;
@@ -428,6 +430,19 @@ void TaskPane::relayoutNow() {
     }
     if (dragging())
         dragging()->show();
+}
+
+namespace {
+int compareTaskBarApps(const void* a, const void* b) {
+    return static_cast<YFrameWindow*>((*static_cast<TaskBarApp* const *>(a))->getFrame())->x()
+        - static_cast<YFrameWindow*>((*static_cast<TaskBarApp* const *>(b))->getFrame())->x();
+}
+}
+
+void TaskPane::sort() {
+    if (fApps.getCount()) {
+        qsort(fApps.getItemPtr(0), fApps.getCount(), sizeof(TaskBarApp*), compareTaskBarApps);
+    }
 }
 
 void TaskPane::handleClick(const XButtonEvent &up, int count) {

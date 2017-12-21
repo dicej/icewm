@@ -59,10 +59,10 @@ void YFrameWindow::snapTo(int &wx, int &wy,
             int wxw = wx + iw;
 
             if (wx >= rx2 - d && wx <= rx2 + d) {
-                wx = rx2;
+                wx = rx2 - 1;
                 flags &= ~1;
             } else if (wxw >= rx1 - d && wxw <= rx1 + d) {
-                wx = rx1 - iw;
+                wx = rx1 - iw + 1;
                 flags &= ~1;
             }
         }
@@ -98,10 +98,10 @@ void YFrameWindow::snapTo(int &wx, int &wy,
             int wyh = wy + ih;
 
             if (wy >= ry2 - d && wy <= ry2 + d) {
-                wy = ry2;
+                wy = ry2 - 1;
                 flags &= ~2;
             } else if (wyh >= ry1 - d && wyh <= ry1 + d) {
-                wy = ry1 - ih;
+                wy = ry1 - ih + 1;
                 flags &= ~2;
             }
         }

@@ -1123,8 +1123,8 @@ int YWindowManager::calcCoverage(bool down, YFrameWindow *frame1, int x, int y, 
             continue;
 
         cover +=
-            intersection(f->x(), f->x() + f->width(), x, x + w) *
-            intersection(f->y(), f->y() + f->height(), y, y + h) * factor;
+            intersection(f->x(), f->x() + f->width() - 1, x, x + w - 1) *
+            intersection(f->y(), f->y() + f->height() - 1, y, y + h - 1) * factor;
 
         if (factor > 1)
             factor /= 2;
@@ -1199,9 +1199,9 @@ bool YWindowManager::getSmartPlace(bool down, YFrameWindow *frame1, int &x, int 
             continue;
 
         addco(xcoord, xcount, f->x());
-        addco(xcoord, xcount, f->x() + f->width());
+        addco(xcoord, xcount, f->x() + f->width() - 1);
         addco(ycoord, ycount, f->y());
-        addco(ycoord, ycount, f->y() + f->height());
+        addco(ycoord, ycount, f->y() + f->height() - 1);
     }
     addco(xcoord, xcount, Mx);
     addco(ycoord, ycount, My);
