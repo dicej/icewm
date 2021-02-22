@@ -7,7 +7,7 @@ PACKAGE=$(grep AC_INIT configure.ac|head -1|sed -r 's,AC_INIT[(][[],,;s,[]].*,,'
 GTVERSION=$(gettext --version|head -1|awk '{print$NF}'|sed -r 's,(^[^\.]*\.[^\.]*\.[^\.]*)\..*$,\1,')
 
 if [ -x "`which git 2>/dev/null`" -a -d .git ]; then
-	VERSION=$(git describe --tags|sed 's,[-_],.,g;s,\.g.*$,,')
+	VERSION=1.4.0
 	DATE=$(git show -s --format=%ci HEAD^{commit}|awk '{print$1}')
 	BRANCH=$(git tag --sort=-creatordate|head -1)
 	GNITS="gnits "

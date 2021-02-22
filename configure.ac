@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([icewm],[1.4.2],[https://github.com/bbidulock/icewm/issues])
-AC_REVISION([1.4.2])
+AC_INIT([icewm],[1.4.0],[https://github.com/bbidulock/icewm/issues])
+AC_REVISION([1.4.0])
 
 AC_CONFIG_SRCDIR([src/ysmapp.cc])
 AC_CONFIG_HEADERS([config.h])
@@ -12,10 +12,10 @@ AC_CONFIG_AUX_DIR([scripts])
 AC_USE_SYSTEM_EXTENSIONS
 AC_CANONICAL_TARGET
 
-DATE='2017-07-30'
+DATE='2017-12-22'
 AC_SUBST([DATE])
 
-BRANCH='1.4.2'
+BRANCH='icewm-1-4-BRANCH'
 AC_SUBST([BRANCH])
 
 APPLICATIONS='icewm icewm-session icesh icewmhint icewmbg icewmtray icehelp'
@@ -24,7 +24,7 @@ TESTCASES="$TESTCASES iceview icesame iceicon icerun icelist icebar" # iceclock
 features=''
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([gnits 1.13.4 dist-xz no-dist-gzip std-options -Wall color-tests silent-rules tar-pax])
+AM_INIT_AUTOMAKE([1.13.4 dist-xz no-dist-gzip std-options -Wall color-tests silent-rules tar-pax])
 AM_MAINTAINER_MODE
 AM_SILENT_RULES([yes])
 AC_PREFIX_DEFAULT([/usr])
@@ -87,7 +87,7 @@ LT_LANG([C++])
 AC_PROG_LIBTOOL
 AC_SUBST([LIBTOOL_DEPS])
 
-AM_GNU_GETTEXT_VERSION([0.19.2])
+AM_GNU_GETTEXT_VERSION([0.19.8])
 AM_GNU_GETTEXT([external])
 
 AC_ARG_ENABLE([i18n],
@@ -153,35 +153,35 @@ AC_FUNC_SELECT_ARGTYPES
 
 AC_MSG_CHECKING([for strlcpy])
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]],[[
-               char a[2];
-               if (strlcpy(a, "yes", 2) != 3)
-                   return 1;]])],
-              [
-               AC_MSG_RESULT([yes])
-               AC_DEFINE([HAVE_STRLCPY], 1,
-                         [Define to 1 if you have the strlcpy function.])
-              ],
-              [
-               AC_MSG_RESULT([no])
-               AH_TEMPLATE([HAVE_STRLCPY],
-                           [Define to 1 if you have the strlcpy function.])
-              ])
+	       char a[2];
+	       if (strlcpy(a, "yes", 2) != 3)
+		   return 1;]])],
+	      [
+	       AC_MSG_RESULT([yes])
+	       AC_DEFINE([HAVE_STRLCPY], 1,
+			 [Define to 1 if you have the strlcpy function.])
+	      ],
+	      [
+	       AC_MSG_RESULT([no])
+	       AH_TEMPLATE([HAVE_STRLCPY],
+			   [Define to 1 if you have the strlcpy function.])
+	      ])
 
 AC_MSG_CHECKING([for strlcat])
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]],[[
-               char a[4] = "no";
-               if (strlcat(a, "yes", 4) != 5)
-                   return 1;]])],
-              [
-               AC_MSG_RESULT([yes])
-               AC_DEFINE([HAVE_STRLCAT], 1,
-                         [Define to 1 if you have the strlcat function.])
-              ],
-              [
-               AC_MSG_RESULT([no])
-               AH_TEMPLATE([HAVE_STRLCAT],
-                           [Define to 1 if you have the strlcat function.])
-              ])
+	       char a[4] = "no";
+	       if (strlcat(a, "yes", 4) != 5)
+		   return 1;]])],
+	      [
+	       AC_MSG_RESULT([yes])
+	       AC_DEFINE([HAVE_STRLCAT], 1,
+			 [Define to 1 if you have the strlcat function.])
+	      ],
+	      [
+	       AC_MSG_RESULT([no])
+	       AH_TEMPLATE([HAVE_STRLCAT],
+			   [Define to 1 if you have the strlcat function.])
+	      ])
 
 
 PKG_CHECK_MODULES([CORE],[fontconfig xext x11])
@@ -265,36 +265,36 @@ AC_ARG_WITH([icesound],
 for iface in `echo "$with_icesound"|sed 's|,| |g'` ; do
     case $iface in
     (ALSA|alsa)
-        PKG_CHECK_MODULES([ALSA],[sndfile alsa],[
-            AUDIO_CFLAGS="$AUDIO_CFLAGS $ALSA_CFLAGS"
-            AUDIO_LIBS="$AUDIO_LIBS $ALSA_LIBS"
-            AC_DEFINE([ENABLE_ALSA],[1],[Define to enable ALSA support.])
-            CONFIG_ALSA=yes],[AC_MSG_WARN([ALSA is not supported])])
-        ;;
+	PKG_CHECK_MODULES([ALSA],[sndfile alsa],[
+	    AUDIO_CFLAGS="$AUDIO_CFLAGS $ALSA_CFLAGS"
+	    AUDIO_LIBS="$AUDIO_LIBS $ALSA_LIBS"
+	    AC_DEFINE([ENABLE_ALSA],[1],[Define to enable ALSA support.])
+	    CONFIG_ALSA=yes],[AC_MSG_WARN([ALSA is not supported])])
+	;;
     (AO|ao)
-        PKG_CHECK_MODULES([AO],[sndfile ao],[
-            AUDIO_CFLAGS="$AUDIO_CFLAGS $AO_CFLAGS"
-            AUDIO_LIBS="$AUDIO_LIBS $AO_LIBS"
-            AC_DEFINE([ENABLE_AO],[1],[Define to enable AO support.])
-            CONFIG_AO=yes],[AC_MSG_WARN([AO is not supported])])
-        ;;
+	PKG_CHECK_MODULES([AO],[sndfile ao],[
+	    AUDIO_CFLAGS="$AUDIO_CFLAGS $AO_CFLAGS"
+	    AUDIO_LIBS="$AUDIO_LIBS $AO_LIBS"
+	    AC_DEFINE([ENABLE_AO],[1],[Define to enable AO support.])
+	    CONFIG_AO=yes],[AC_MSG_WARN([AO is not supported])])
+	;;
     (OSS|oss)
-        PKG_CHECK_MODULES([OSS],[sndfile],[
-            AUDIO_CFLAGS="$AUDIO_CFLAGS $OSS_CFLAGS"
-            AUDIO_LIBS="$AUDIO_LIBS $OSS_LIBS"
-            AC_DEFINE([ENABLE_OSS],[1],[Define to enable OSS support.])
-            CONFIG_OSS=yes],[AC_MSG_WARN([OSS is not supported])])
-        ;;
+	PKG_CHECK_MODULES([OSS],[sndfile],[
+	    AUDIO_CFLAGS="$AUDIO_CFLAGS $OSS_CFLAGS"
+	    AUDIO_LIBS="$AUDIO_LIBS $OSS_LIBS"
+	    AC_DEFINE([ENABLE_OSS],[1],[Define to enable OSS support.])
+	    CONFIG_OSS=yes],[AC_MSG_WARN([OSS is not supported])])
+	;;
     (ESound|ESD|esound|esd)
-        PKG_CHECK_MODULES([ESD],[esound],[
-            AUDIO_CFLAGS="$AUDIO_CFLAGS $ESD_CFLAGS"
-            AUDIO_LIBS="$AUDIO_LIBS $ESD_LIBS"
-            AC_DEFINE([ENABLE_ESD],[1],[Define to enable ESD support.])
-            CONFIG_ESD=yes],[AC_MSG_WARN([ESD is not supported])])
-        ;;
+	PKG_CHECK_MODULES([ESD],[esound],[
+	    AUDIO_CFLAGS="$AUDIO_CFLAGS $ESD_CFLAGS"
+	    AUDIO_LIBS="$AUDIO_LIBS $ESD_LIBS"
+	    AC_DEFINE([ENABLE_ESD],[1],[Define to enable ESD support.])
+	    CONFIG_ESD=yes],[AC_MSG_WARN([ESD is not supported])])
+	;;
     (*)
-        AC_MSG_WARN([Invalid audio interface: $iface])
-        ;;
+	AC_MSG_WARN([Invalid audio interface: $iface])
+	;;
     esac
 done
 for iface in ALSA AO OSS ESD; do
@@ -460,11 +460,11 @@ dnl AC_SUBST([GNOME_VER])
 AC_SUBST([CONFIG_KDE_MENU_DIR])
 
 AC_CONFIG_FILES([Makefile
-                 src/Makefile
-                 po/Makefile.in
-                 doc/Makefile
+		 src/Makefile
+		 po/Makefile.in
+		 doc/Makefile
 		 man/Makefile
-                 lib/Makefile
+		 lib/Makefile
 		 lib/keys
 		 lib/menu
 		 lib/programs
