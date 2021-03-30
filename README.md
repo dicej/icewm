@@ -1,3 +1,13 @@
+Joel:
+
+```
+sudo apt update
+sudo apt install -y autoconf autopoint libtool libfontconfig1-dev libxext-dev libgdk-pixbuf2.0-dev gettext asciidoctor
+bash autogen.sh
+./configure --disable-xinerama --prefix=/home/dicej/local/icewm -with-cfgdir=/home/dicej/local/icewm/etc
+make && make install
+```
+
 [icewm -- read me first file.  2017-07-30]: #
 
 Ice Window Manager (IceWM)
