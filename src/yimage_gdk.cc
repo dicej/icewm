@@ -5,9 +5,9 @@
 #include "yimage.h"
 #include "yxapp.h"
 
-extern "C" {
+//extern "C" {
 #include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
-}
+//}
 
 class YImageGDK: public YImage {
 public:
